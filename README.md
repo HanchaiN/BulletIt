@@ -9,7 +9,8 @@ Essentially, it will inevitably become a forum that refuse to be identify as one
 
 ## Roadmap
 
-- [ ] Basic CRUD with text content and archiving
+- [x] Basic CRUD with text content and archiving
+- [ ] Require approval before mutations (approval workflow with patch system)
 
 ## Contributing
 
