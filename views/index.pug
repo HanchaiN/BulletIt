@@ -19,3 +19,4 @@ block content
         else
           button(hx-patch='/' + val.id, hx-vals='{ \"active\": 1 }', hx-target='body', hx-push-url='true') Revive
         //- button(hx-delete='/' + val.id, hx-target='body', hx-push-url='true') Delete
+        button(hx-get='/' + val.id + '/history', hx-target='body', hx-push-url='true') History

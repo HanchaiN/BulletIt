@@ -1,0 +1,13 @@
+extends layout
+
+block content
+  ul
+    each val in list
+      li
+        if val.content !== null
+          span #{val.content}
+        if val.is_active !== null
+          if val.is_active
+            input(type="checkbox", checked, disabled)
+          else
+            input(type="checkbox", disabled)

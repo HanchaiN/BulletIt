@@ -10,7 +10,8 @@ Essentially, it will inevitably become a forum that refuse to be identify as one
 ## Roadmap
 
 - [x] Basic CRUD with text content and archiving
-- [ ] Require approval before mutations (approval workflow with patch system)
+- [x] Require approval before mutations (approval workflow with patch system)
+- [ ] E-mail based auth for admin (admin invites and OTP login)
 
 ## Contributing
 

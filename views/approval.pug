@@ -1,0 +1,15 @@
+extends layout
+
+block content
+  ul
+    each val in list
+      li
+        if val.content !== null
+          span #{val.content}
+        if val.is_active !== null
+          if val.is_active
+            input(type="checkbox", checked, disabled)
+          else
+            input(type="checkbox", disabled)
+        button(hx-post='/patch/' + val.id + '/approve', hx-target='body', hx-push-url='true') Accept
+        button(hx-delete='/patch/' + val.id, hx-target='body', hx-push-url='true') Reject
