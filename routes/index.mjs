@@ -11,7 +11,9 @@ router.get('/', function (req, res) {
   const validFilters = ['active', 'archive', 'all'];
   
   if (!validFilters.includes(filter)) {
-    return res.redirect(303, '/');
+    const err = new Error('Invalid filter. Valid options are: active, archive, all');
+    err.status = 400;
+    throw err;
   }
   
   const list = res.app.locals.database.bullet_read(filter);
@@ -26,41 +28,38 @@ router.post('/', function (req, res) {
   const { content } = req.body;
   
   if (!content || typeof content !== 'string' || content.trim() === '') {
-    res.status(400);
-    res.locals.message = 'Content is required and must be a non-empty string';
-    res.locals.error = {};
-    return res.render('error');
+    const err = new Error('Content is required and must be a non-empty string');
+    err.status = 400;
+    throw err;
   }
   
   res.app.locals.database.patch_bullet_create(content);
-  res.redirect(303, '/');
+  res.status(202).render('error', { message: `Bullet patch created and pending approval`, error: {} });
 });
 
 /**
  * PATCH /:id - Request archive or unarchive
- * Body: { active: '0' (archive) or '1' (unarchive) }
+ * Body: { active: '0' (archive) or '1' (unarchive), content: string }
  */
 router.patch('/:id', function (req, res) {
   const bulletId = parseInt(req.params.id, 10);
   
   if (isNaN(bulletId)) {
-    res.status(400);
-    res.locals.message = 'Invalid bullet ID';
-    res.locals.error = {};
-    return res.render('error');
+    const err = new Error('Invalid bullet ID');
+    err.status = 400;
+    throw err;
   }
-  
-  const bullet = res.app.locals.database.bullet_read_by_id(bulletId);
-  if (!bullet) {
-    res.status(404);
-    res.locals.message = 'Bullet not found';
-    res.locals.error = {};
-    return res.render('error');
-  }
-  
+
   const isActive = req.body.active !== '0';
-  res.app.locals.database.patch_bullet_create_active_change(bulletId, isActive);
-  res.redirect(303, '/');
+  try {
+    res.app.locals.database.patch_bullet_create_active_change(bulletId, isActive);
+  } catch (err) {
+    if (err.code === 'DB_NO_CHANGE') {
+      err.status = 404;
+    }
+    throw err;
+  }
+  res.status(202).render('error', { message: `Bullet patch created for ${bulletId} and pending approval`, error: {} });
 });
 
 /**
@@ -70,23 +69,20 @@ router.patch('/:id', function (req, res) {
 //   const bulletId = parseInt(req.params.id, 10);
   
 //   if (isNaN(bulletId)) {
-//     res.status(400);
-//     res.locals.message = 'Invalid bullet ID';
-//     res.locals.error = {};
-//     return res.render('error');
+//     const err = new Error('Invalid bullet ID');
+//     err.status = 400;
+//     throw err;
 //   }
 
-//   const bullet = res.app.locals.database.bullet_read_by_id(bulletId);
-//   if (!bullet) {
-//     res.status(404);
-//     res.locals.message = 'Bullet not found';
-//     res.locals.error = {};
-//     return res.render('error');
+//   try {
+//     res.app.locals.database.bulletin_delete(req.params.id);
+//   } catch (err) {
+//     if (err.code === 'DB_NO_CHANGE') {
+//       err.status = 404;
+//     }
+//     throw err;
 //   }
-
-//   res.app.locals.database.bulletin_delete(req.params.id);
-
-//   return res.redirect(303, '/');
+//   res.status(200).render('error', { message: 'Bullet deleted successfully', error: {} });
 // });
 
 /**
@@ -96,13 +92,12 @@ router.get('/:id/history', function (req, res) {
   const bulletId = parseInt(req.params.id, 10);
   
   if (isNaN(bulletId)) {
-    res.status(400);
-    res.locals.message = 'Invalid bullet ID';
-    res.locals.error = {};
-    return res.render('error');
+    const err = new Error('Invalid bullet ID');
+    err.status = 400;
+    throw err;
   }
   
-  const list = res.app.locals.database.bullet_read_history(bulletId);
+  const list = res.app.locals.database.patch_bullet_read_by_bulletid(bulletId);
   res.render('history', { list });
 });
 
@@ -122,14 +117,20 @@ router.post('/patch/:id/approve', function (req, res) {
   const patchId = parseInt(req.params.id, 10);
   
   if (isNaN(patchId)) {
-    res.status(400);
-    res.locals.message = 'Invalid patch ID';
-    res.locals.error = {};
-    return res.render('error');
+    const err = new Error('Invalid patch ID');
+    err.status = 400;
+    throw err;
   }
   
-  res.app.locals.database.patch_bullet_approve(patchId);
-  res.redirect(303, '/patch');
+  try {
+    res.app.locals.database.patch_bullet_approve(patchId);
+  } catch (err) {
+    if (err.code === 'DB_NO_CHANGE') {
+      err.status = 409;
+    }
+    throw err;
+  }
+  res.status(200).render('error', { message: `Patch ${patchId} approved and applied successfully`, error: {} });
 });
 
 /**
@@ -139,14 +140,20 @@ router.delete('/patch/:id', function (req, res) {
   const patchId = parseInt(req.params.id, 10);
   
   if (isNaN(patchId)) {
-    res.status(400);
-    res.locals.message = 'Invalid patch ID';
-    res.locals.error = {};
-    return res.render('error');
+    const err = new Error('Invalid patch ID');
+    err.status = 400;
+    throw err;
   }
   
-  res.app.locals.database.patch_bullet_reject(patchId);
-  res.redirect(303, '/patch');
+  try {
+    res.app.locals.database.patch_bullet_reject(patchId);
+  } catch (err) {
+    if (err.code === 'DB_NO_CHANGE') {
+      err.status = 409;
+    }
+    throw err;
+  }
+  res.status(200).render('error', { message: `Patch ${patchId} rejected successfully`, error: {} });
 });
 
 export default router;

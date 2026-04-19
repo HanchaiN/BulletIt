@@ -12,6 +12,10 @@ Essentially, it will inevitably become a forum that refuse to be identify as one
 - [x] Basic CRUD with text content and archiving
 - [x] Require approval before mutations (approval workflow with patch system)
 - [ ] E-mail based auth for admin (admin invites and OTP login)
+- [ ] Longer content for bullet (keep the separated short title)
+- [ ] Webhook call daily on new unarchived bullet
+- [ ] Set archive-unarchive ahead of time
+- [ ] Better content patch and version management
 
 ## Contributing
 

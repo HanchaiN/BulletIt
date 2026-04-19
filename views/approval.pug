@@ -1,7 +1,8 @@
 extends layout
 
 block content
-  ul
+  div#response
+  ul#patches(hx-get='/patch', hx-trigger='click[event.target.matches("button")]', hx-target='#patches', hx-select='#patches', hx-swap='innerHTML')
     each val in list
       li
         if val.content !== null
@@ -11,5 +12,5 @@ block content
             input(type="checkbox", checked, disabled)
           else
             input(type="checkbox", disabled)
-        button(hx-post='/patch/' + val.id + '/approve', hx-target='body', hx-push-url='true') Accept
-        button(hx-delete='/patch/' + val.id, hx-target='body', hx-push-url='true') Reject
+        button(hx-post='/patch/' + val.id + '/approve', hx-target='#response', hx-target-error='#response', hx-select='#error', hx-swap='innerHTML') Accept
+        button(hx-delete='/patch/' + val.id, hx-target='#response', hx-target-error='#response', hx-select='#error', hx-swap='innerHTML') Reject

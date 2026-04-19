@@ -2,11 +2,14 @@ doctype html
 html
   head
     title= title
-    script(src='https://unpkg.com/htmx.org@1.9.2', integrity='sha384-L6OqL9pRWyyFU3+/bjdSri+iIphTN/bvYyM37tICVyOJkWZLpP2vGn6VUEXgzg6h', crossorigin='anonymous')
-  body
-    ul
-      li
-        a(href='/') Home
-      li
-        a(href='/patch') Review
-    block content
+    script(src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.8/dist/htmx.min.js", integrity="sha384-/TgkGk7p307TH7EXJDuUlgG3Ce1UVolAOFopFekQkkXihi5u/6OCvVKyz1W+idaz", crossorigin="anonymous")
+    script(src="https://cdn.jsdelivr.net/npm/htmx-ext-response-targets@2.0.4", integrity="sha384-T41oglUPvXLGBVyRdZsVRxNWnOOqCynaPubjUVjxhsjFTKrFJGEMm3/0KGmNQ+Pg", crossorigin="anonymous")
+  body(hx-ext="response-targets")
+    nav
+      ul
+        li
+          a(href='/') Home
+        li
+          a(href='/patch') Review
+    main#main
+      block content

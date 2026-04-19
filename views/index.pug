@@ -1,22 +1,26 @@
 extends layout
 
 block content
-  form(action='/', method='POST')
-    input(name='content', type='text', placeholder='Details')
-    button(hx-post='/', hx-target='body', hx-push-url='true') Add bulletin
+  ul
+    li
+      a(href='/?q=all') Show All
+    li
+      a(href='/?q=active') Show Active
+    li
+      a(href='/?q=archive') Show Archive
 
-  div
-    button(hx-get='/?q=all', hx-target='body', hx-push-url='true') Show All
-    button(hx-get='/?q=active', hx-target='body', hx-push-url='true') Show Active
-    button(hx-get='/?q=archive', hx-target='body', hx-push-url='true') Show Archive
+  form(hx-post='/', hx-target='#response', hx-target-error='#response', hx-select='#error', hx-swap='innerHTML')
+    input(name='content', type='text', placeholder='Details')
+    button(type='submit') Add bulletin
+  div#response
 
   ul
     each val in list
       li
         span #{val.content}
         if val.is_active
-          button(hx-patch='/' + val.id, hx-vals='{ \"active\": 0 }', hx-target='body', hx-push-url='true') Archive
+          button(hx-patch='/' + val.id, hx-vals='{ \"active\": 0 }', hx-target='#response', hx-target-error='#response', hx-select='#error', hx-swap='innerHTML') Archive
         else
-          button(hx-patch='/' + val.id, hx-vals='{ \"active\": 1 }', hx-target='body', hx-push-url='true') Revive
-        //- button(hx-delete='/' + val.id, hx-target='body', hx-push-url='true') Delete
-        button(hx-get='/' + val.id + '/history', hx-target='body', hx-push-url='true') History
+          button(hx-patch='/' + val.id, hx-vals='{ \"active\": 1 }', hx-target='#response', hx-target-error='#response', hx-select='#error', hx-swap='innerHTML') Revive
+        //- button(hx-delete='/' + val.id, hx-target='#response', hx-target-error='#response', hx-select='#error', hx-swap='innerHTML') Delete
+        a(href='/' + val.id + '/history') History
