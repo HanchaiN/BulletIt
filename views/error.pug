@@ -1,7 +1,10 @@
 extends layout
 
 block content
-  div#error
-    p= message
+  div
+    h1
+      span#error= message
+    if error && error.status
+      p Status: #{error.status}
     if error && error.stack
       pre #{error.stack}

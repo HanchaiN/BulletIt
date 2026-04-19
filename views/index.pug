@@ -14,7 +14,7 @@ block content
     button(type='submit') Add bulletin
   div#response
 
-  ul
+  ul#bullets(hx-get='/', hx-trigger='refreshBullet', hx-target='#bullets', hx-select='#bullets', hx-swap='outerHTML')
     each val in list
       li
         span #{val.content}

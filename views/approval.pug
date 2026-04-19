@@ -2,7 +2,7 @@ extends layout
 
 block content
   div#response
-  ul#patches(hx-get='/patch', hx-trigger='click[event.target.matches("button")]', hx-target='#patches', hx-select='#patches', hx-swap='innerHTML')
+  ul#patches(hx-get='/patch', hx-trigger='refreshPatch', hx-target='#patches', hx-select='#patches', hx-swap='outerHTML')
     each val in list
       li
         if val.content !== null

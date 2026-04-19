@@ -1,4 +1,5 @@
 import express from 'express';
+import authMiddleware from '../lib/middleware/auth.mjs';
 
 const router = express.Router();
 
@@ -33,8 +34,8 @@ router.post('/', function (req, res) {
     throw err;
   }
   
-  res.app.locals.database.patch_bullet_create(content);
-  res.status(202).render('error', { message: `Bullet patch created and pending approval`, error: {} });
+  const patchId = res.app.locals.database.patch_bullet_create(content);
+  res.status(202).render('error', { message: `Bullet patch ${patchId} created and pending approval`, error: {} });
 });
 
 /**
@@ -52,38 +53,38 @@ router.patch('/:id', function (req, res) {
 
   const isActive = req.body.active !== '0';
   try {
-    res.app.locals.database.patch_bullet_create_active_change(bulletId, isActive);
+    const patchId = res.app.locals.database.patch_bullet_create_active_change(bulletId, isActive);
   } catch (err) {
     if (err.code === 'DB_NO_CHANGE') {
       err.status = 404;
     }
     throw err;
   }
-  res.status(202).render('error', { message: `Bullet patch created for ${bulletId} and pending approval`, error: {} });
+  res.status(202).render('error', { message: `Bullet patch ${patchId} created for ${bulletId} and pending approval`, error: {} });
 });
 
 /**
  * DELETE /:id - Remove a bullet directly
  */
-// router.delete('/:id', function (req, res, next) {
-//   const bulletId = parseInt(req.params.id, 10);
+router.delete('/:id', authMiddleware, function (req, res, next) {
+  const bulletId = parseInt(req.params.id, 10);
   
-//   if (isNaN(bulletId)) {
-//     const err = new Error('Invalid bullet ID');
-//     err.status = 400;
-//     throw err;
-//   }
+  if (isNaN(bulletId)) {
+    const err = new Error('Invalid bullet ID');
+    err.status = 400;
+    throw err;
+  }
 
-//   try {
-//     res.app.locals.database.bulletin_delete(req.params.id);
-//   } catch (err) {
-//     if (err.code === 'DB_NO_CHANGE') {
-//       err.status = 404;
-//     }
-//     throw err;
-//   }
-//   res.status(200).render('error', { message: 'Bullet deleted successfully', error: {} });
-// });
+  try {
+    res.app.locals.database.bulletin_delete(req.params.id);
+  } catch (err) {
+    if (err.code === 'DB_NO_CHANGE') {
+      err.status = 404;
+    }
+    throw err;
+  }
+  res.status(200).render('error', { message: `Bullet ${bulletId} deleted successfully`, error: {} });
+});
 
 /**
  * GET /:id/history - View change history for a bullet
@@ -113,7 +114,7 @@ router.get('/patch', function (req, res) {
  * POST /patch/:id/approve - Approve a patch
  * Atomically applies the patch and rejects competing patches
  */
-router.post('/patch/:id/approve', function (req, res) {
+router.post('/patch/:id/approve', authMiddleware, function (req, res) {
   const patchId = parseInt(req.params.id, 10);
   
   if (isNaN(patchId)) {
@@ -122,21 +123,23 @@ router.post('/patch/:id/approve', function (req, res) {
     throw err;
   }
   
+  let bulletId;
   try {
-    res.app.locals.database.patch_bullet_approve(patchId);
+    bulletId = res.app.locals.database.patch_bullet_approve(patchId);
   } catch (err) {
     if (err.code === 'DB_NO_CHANGE') {
       err.status = 409;
     }
     throw err;
   }
-  res.status(200).render('error', { message: `Patch ${patchId} approved and applied successfully`, error: {} });
+  res.setHeader('HX-Trigger', JSON.stringify({ refreshPatch: patchId, refreshBullet: true }));
+  res.status(200).render('error', { message: `Patch ${patchId} approved and applied to bullet ${bulletId} successfully`, error: {} });
 });
 
 /**
  * DELETE /patch/:id - Reject a patch
  */
-router.delete('/patch/:id', function (req, res) {
+router.delete('/patch/:id', authMiddleware, function (req, res) {
   const patchId = parseInt(req.params.id, 10);
   
   if (isNaN(patchId)) {
@@ -153,6 +156,7 @@ router.delete('/patch/:id', function (req, res) {
     }
     throw err;
   }
+  res.setHeader('HX-Trigger', JSON.stringify({ refreshPatch: patchId }));
   res.status(200).render('error', { message: `Patch ${patchId} rejected successfully`, error: {} });
 });
 
