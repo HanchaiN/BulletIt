@@ -51,9 +51,23 @@ router.patch('/:id', function (req, res) {
     throw err;
   }
 
-  const isActive = req.body.active !== '0';
+  const isActive = (req.body.active ?? null) === null ? null : req.body.active !== '0';
+  const content = req.body.content ?? null;
+  if (isActive === null && content === null) {
+    const err = new Error('At least one of active or content must be provided');
+    err.status = 400;
+    throw err;
+  }
+
+  let patchId;
   try {
-    const patchId = res.app.locals.database.patch_bullet_create_active_change(bulletId, isActive);
+    if (content === null) {
+      patchId = res.app.locals.database.patch_bullet_create_active_change(bulletId, isActive);
+    } else if (isActive === null) {
+      patchId = res.app.locals.database.patch_bullet_create_content_change(bulletId, content);
+    } else {
+      patchId = res.app.locals.database.patch_bullet_create_full_change(bulletId, content, isActive);
+    }
   } catch (err) {
     if (err.code === 'DB_NO_CHANGE') {
       err.status = 404;
@@ -106,7 +120,7 @@ router.get('/:id/history', function (req, res) {
  * GET /patch - List pending patches for review
  */
 router.get('/patch', function (req, res) {
-  const list = res.app.locals.database.patch_bullet_read_pending();
+  const list = res.app.locals.database.patch_bullet_read_pending_group();
   res.render('approval', { list });
 });
 

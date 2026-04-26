@@ -22,5 +22,8 @@ block content
           button(hx-patch='/' + val.id, hx-vals='{ \"active\": 0 }', hx-target='#response', hx-target-error='#response', hx-select='#error', hx-swap='innerHTML') Archive
         else
           button(hx-patch='/' + val.id, hx-vals='{ \"active\": 1 }', hx-target='#response', hx-target-error='#response', hx-select='#error', hx-swap='innerHTML') Revive
+        form(hx-patch='/' + val.id, hx-target='#response', hx-target-error='#response', hx-select='#error', hx-swap='innerHTML')
+          input(name='content', type='text', placeholder='Details', value=val.content)
+          button(type='submit') Edit
         //- button(hx-delete='/' + val.id, hx-target='#response', hx-target-error='#response', hx-select='#error', hx-swap='innerHTML') Delete
         a(href='/' + val.id + '/history') History

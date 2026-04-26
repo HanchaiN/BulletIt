@@ -3,14 +3,21 @@ extends layout
 block content
   div#response
   ul#patches(hx-get='/patch', hx-trigger='refreshPatch', hx-target='#patches', hx-select='#patches', hx-swap='outerHTML')
-    each val in list
-      li
-        if val.content !== null
-          span #{val.content}
-        if val.is_active !== null
-          if val.is_active
-            input(type="checkbox", checked, disabled)
-          else
-            input(type="checkbox", disabled)
-        button(hx-post='/patch/' + val.id + '/approve', hx-target='#response', hx-target-error='#response', hx-select='#error', hx-swap='innerHTML') Accept
-        button(hx-delete='/patch/' + val.id, hx-target='#response', hx-target-error='#response', hx-select='#error', hx-swap='innerHTML') Reject
+    each bullet in list
+      li [#{bullet.id}.v#{bullet.version}] #{bullet.content}
+        if bullet.is_active
+          input(type="checkbox", checked, disabled)
+        else
+          input(type="checkbox", disabled)
+        ul
+          each patch in bullet.patches
+            li
+              if patch.content !== null
+                span #{patch.content}
+              if patch.is_active !== null
+                if patch.is_active
+                  input(type="checkbox", checked, disabled)
+                else
+                  input(type="checkbox", disabled)
+              button(hx-post='/patch/' + patch.id + '/approve', hx-target='#response', hx-target-error='#response', hx-select='#error', hx-swap='innerHTML') Accept
+              button(hx-delete='/patch/' + patch.id, hx-target='#response', hx-target-error='#response', hx-select='#error', hx-swap='innerHTML') Reject
