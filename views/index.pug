@@ -18,20 +18,16 @@ block content
 
 
   form(hx-post='/', hx-target='#response', hx-target-error='#response', hx-select='#error', hx-swap='innerHTML')
-    input(name='content', type='text', placeholder='Details')
+    textarea(name='content', placeholder='Details')
     button(type='submit') Add bulletin
   div#response
 
-  ul#bullets(hx-get='/', hx-trigger='refreshBullet', hx-target='#bullets', hx-select='#bullets', hx-swap='outerHTML')
+  ul#bullets
     each val in list
       li
         span #{val.content}
         if val.is_active
-          button(hx-patch='/' + val.id, hx-vals='{ \"active\": 0 }', hx-target='#response', hx-target-error='#response', hx-select='#error', hx-swap='innerHTML') Archive
+          input(type="checkbox", checked, disabled)
         else
-          button(hx-patch='/' + val.id, hx-vals='{ \"active\": 1 }', hx-target='#response', hx-target-error='#response', hx-select='#error', hx-swap='innerHTML') Revive
-        form(hx-patch='/' + val.id, hx-target='#response', hx-target-error='#response', hx-select='#error', hx-swap='innerHTML')
-          input(name='content', type='text', placeholder='Details', value=val.content)
-          button(type='submit') Edit
-        //- button(hx-delete='/' + val.id, hx-target='#response', hx-target-error='#response', hx-select='#error', hx-swap='innerHTML') Delete
-        a(href='/' + val.id + '/history') History
+          input(type="checkbox", disabled)
+        a(href='/' + val.id + '/detail') Details

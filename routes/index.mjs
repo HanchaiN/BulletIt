@@ -107,9 +107,9 @@ router.delete('/:id', authMiddleware, function (req, res, next) {
 });
 
 /**
- * GET /:id/history - View change history for a bullet
+ * GET /:id/detail - View detail of a bullet
  */
-router.get('/:id/history', function (req, res) {
+router.get('/:id/detail', function (req, res) {
   const bulletId = parseInt(req.params.id, 10);
   
   if (isNaN(bulletId)) {
@@ -119,8 +119,8 @@ router.get('/:id/history', function (req, res) {
   }
   
   const bullet = res.app.locals.database.bullet_read_by_id(bulletId);
-  const list = res.app.locals.database.patch_bullet_read_by_bulletid(bulletId);
-  res.render('history', { bullet, list });
+  const history = res.app.locals.database.patch_bullet_read_by_bulletid(bulletId);
+  res.render('detail', { bullet, history });
 });
 
 /**

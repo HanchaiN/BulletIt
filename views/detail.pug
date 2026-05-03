@@ -1,0 +1,28 @@
+extends layout
+
+block content
+  span #{bullet.content}
+  form(hx-patch='/' + bullet.id, hx-target='#response', hx-target-error='#response', hx-select='#error', hx-swap='innerHTML')
+    if bullet.is_active
+      input(name='active', type='hidden', value='0')
+      button(type='submit') Archive
+    else
+      input(name='active', type='hidden', value='1')
+      button(type='submit') Revive
+  //- form(hx-delete='/' + bullet.id, hx-target='#response', hx-target-error='#response', hx-select='#error', hx-swap='innerHTML')
+  //-   button(type='submit') Delete
+  form(hx-patch='/' + bullet.id, hx-target='#response', hx-target-error='#response', hx-select='#error', hx-swap='innerHTML')
+    textarea(name='content', placeholder='Details') #{bullet.content}
+    button(type='submit') Edit
+  div#response
+
+  ul
+    each patch in history
+      li
+        if patch.content !== null
+          span #{patch.content}
+        if patch.is_active !== null
+          if patch.is_active
+            input(type="checkbox", checked, disabled)
+          else
+            input(type="checkbox", disabled)
