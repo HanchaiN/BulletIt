@@ -1,13 +1,21 @@
 extends layout
 
 block content
-  ul
-    li
-      a(href='/?q=all') Show All
-    li
-      a(href='/?q=active') Show Active
-    li
-      a(href='/?q=archive') Show Archive
+  form(action="/search" method="POST")#search
+    input(type="search",
+        name="searchterm",
+        placeholder="Begin typing to search...",
+        hx-post="/search",
+        hx-trigger="keyup changed delay:500ms, search",
+        hx-target="#bullets",
+        hx-target-error='#response',
+        hx-select="#bullets,#error",
+        hx-swap='outerHTML')#searchterm
+    input(name="active", type="checkbox", checked)#active
+    label(for="active") Show Active
+    input(name="archive", type="checkbox")#archive
+    label(for="archive") Show Archive
+
 
   form(hx-post='/', hx-target='#response', hx-target-error='#response', hx-select='#error', hx-swap='innerHTML')
     input(name='content', type='text', placeholder='Details')

@@ -4,20 +4,10 @@ import authMiddleware from '../lib/middleware/auth.mjs';
 const router = express.Router();
 
 /**
- * GET / - List bullets with optional filter
- * Query params: ?q=active|archive|all (default: active)
+ * GET / - List bullets
  */
 router.get('/', function (req, res) {
-  const filter = req.query.q ?? 'active';
-  const validFilters = ['active', 'archive', 'all'];
-  
-  if (!validFilters.includes(filter)) {
-    const err = new Error('Invalid filter. Valid options are: active, archive, all');
-    err.status = 400;
-    throw err;
-  }
-  
-  const list = res.app.locals.database.bullet_read(filter);
+  const list = res.app.locals.database.bullet_read();
   res.render('index', { list });
 });
 
@@ -36,6 +26,22 @@ router.post('/', function (req, res) {
   
   const patchId = res.app.locals.database.patch_bullet_create(content);
   res.status(202).render('error', { message: `Bullet patch ${patchId} created and pending approval`, error: {} });
+});
+
+/**
+ * POST / - Create a new patch (new bullet submission)
+ * Body: { searchterm: string, active: boolean, archive: boolean }
+ */
+router.post('/search', function (req, res) {
+  const { searchterm, active, archive } = req.body;
+  // TODO: parse searchterm
+
+  const list = res.app.locals.database.bullet_search({
+    searchterm,
+    active: active === 'on',
+    archive: archive === 'on',
+  });
+  res.render('index', { list });
 });
 
 /**
@@ -112,8 +118,9 @@ router.get('/:id/history', function (req, res) {
     throw err;
   }
   
+  const bullet = res.app.locals.database.bullet_read_by_id(bulletId);
   const list = res.app.locals.database.patch_bullet_read_by_bulletid(bulletId);
-  res.render('history', { list });
+  res.render('history', { bullet, list });
 });
 
 /**
