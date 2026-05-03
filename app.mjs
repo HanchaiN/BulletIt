@@ -3,6 +3,7 @@ import express from 'express';
 import path from 'node:path';
 import cookieParser from 'cookie-parser';
 import logger from 'morgan';
+import crypto from "node:crypto";
 
 import indexRouter from './routes/index.mjs';
 import { open } from './lib/sql/index.mjs';
@@ -23,6 +24,12 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.locals = {
   database: open(),
+  auth: {
+    secret: crypto.randomBytes(256),
+    password: {
+      admin: null,
+    }
+  }
 };
 
 
