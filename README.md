@@ -7,6 +7,8 @@
 BulletIt is a functional web application that functions like a bulletin board and more.
 Essentially, it will inevitably become a forum that refuse to be identify as one.
 
+Maybe one day, by deliverance of omniscient gods, BulletIt can freely identify as anything.
+
 ## Roadmap
 
 - [x] Basic CRUD with text content and archiving

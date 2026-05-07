@@ -1,23 +1,41 @@
 extends layout
 
 block content
+  h1 Review Patches
+
   div#response
-  ul#patches(hx-get='/patch', hx-trigger='refreshPatch', hx-target='#patches', hx-select='#patches', hx-swap='outerHTML')
-    each bullet in list
-      li [#{bullet.id}.v#{bullet.version}] #{bullet.content}
-        if bullet.is_active
-          input(type="checkbox", checked, disabled)
-        else
-          input(type="checkbox", disabled)
-        ul
-          each patch in bullet.patches
-            li
-              if patch.content !== null
-                span #{patch.content}
-              if patch.is_active !== null
-                if patch.is_active
-                  input(type="checkbox", checked, disabled)
-                else
-                  input(type="checkbox", disabled)
-              button(hx-post='/patch/' + patch.id + '/approve', hx-target='#response', hx-target-error='#response', hx-select='#error', hx-swap='innerHTML') Accept
-              button(hx-delete='/patch/' + patch.id, hx-target='#response', hx-target-error='#response', hx-select='#error', hx-swap='innerHTML') Reject
+
+  .card
+    h3 Pending Changes
+    ul#patches
+      if list.length === 0
+        li.empty-state
+          div.empty-state-icon 🥀
+          div.empty-state-text No patches to review 
+      else
+        each bullet in list
+          li.patch-item
+            .patch-header
+              div.patch-title
+                span(style='color: var(--gray-500); font-size: 0.85rem;')= '[#' + bullet.id + '.v' + bullet.version + ']'
+                br
+                span= bullet.content
+              input(type="checkbox", disabled, style='cursor: default;', checked=bullet.is_active)
+
+            if bullet.patches.length === 0
+              p.text-muted.text-small(style='margin: 0;') No changes proposed
+            else
+              .patch-changes
+                each patch in bullet.patches
+                  .change-item
+                    div.change-content
+                      if patch.content !== null
+                        div= patch.content
+                      if patch.is_active !== null
+                        div.mt-1
+                          input(type="checkbox", disabled, checked=patch.is_active, style='cursor: default; margin-right: 0.5rem;')
+                          span.text-small= patch.is_active ? 'Active' : 'Archived'
+
+                    .change-actions
+                      button.btn-primary.btn-small(hx-post='/patch/' + patch.id + '/approve', hx-target='#response', hx-target-error='#response', hx-select='#error', hx-swap='innerHTML') Accept
+                      button.btn-danger.btn-small(hx-delete='/patch/' + patch.id, hx-target='#response', hx-target-error='#response', hx-select='#error', hx-swap='innerHTML') Reject

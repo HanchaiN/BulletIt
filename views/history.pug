@@ -1,13 +1,26 @@
 extends layout
 
 block content
-  ul
-    each val in list
-      li
-        if val.content !== null
-          span #{val.content}
-        if val.is_active !== null
-          if val.is_active
-            input(type="checkbox", checked, disabled)
-          else
-            input(type="checkbox", disabled)
+  h1 Bulletin History
+
+  .card
+    h3 Change Timeline
+    ul(style='list-style: none; padding: 0; margin: 0;')
+      if list.length === 0
+        li.empty-state
+          div.empty-state-icon 📜
+          div.empty-state-text No history yet
+      else
+        each val in list
+          li(style='padding: var(--spacing-lg); margin-bottom: var(--spacing-md); border-left: 3px solid var(--primary); padding-left: calc(var(--spacing-lg) + 0.5rem); position: relative; background: var(--gray-50); border-radius: 0 var(--radius-md) var(--radius-md) 0;')
+            if val.content !== null
+              div.mb-2
+                strong Content:
+                br
+                span(style='color: var(--gray-700);')= val.content
+            if val.is_active !== null
+              div
+                strong Status:
+                br
+                span.badge(class=val.is_active ? 'badge-success' : 'badge-gray')
+                  = val.is_active ? '✓ Active' : 'Archived'

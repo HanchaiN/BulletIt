@@ -1,15 +1,186 @@
 doctype html
 html
   head
+    meta(charset="utf-8")
+    meta(name="viewport", content="width=device-width, initial-scale=1")
     title= title
+    link(rel="stylesheet", href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css")
+    link(rel="stylesheet", href="/style.css")
     script(src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.8/dist/htmx.min.js", integrity="sha384-/TgkGk7p307TH7EXJDuUlgG3Ce1UVolAOFopFekQkkXihi5u/6OCvVKyz1W+idaz", crossorigin="anonymous")
     script(src="https://cdn.jsdelivr.net/npm/htmx-ext-response-targets@2.0.4", integrity="sha384-T41oglUPvXLGBVyRdZsVRxNWnOOqCynaPubjUVjxhsjFTKrFJGEMm3/0KGmNQ+Pg", crossorigin="anonymous")
-  body(hx-ext="response-targets")
-    nav
-      ul
-        li
-          a(href='/') Home
-        li
-          a(href='/patch') Review
-    main#main
-      block content
+
+  body(hx-ext="response-targets", style='display: flex; flex-direction: column; height: 100vh;')
+    nav.navbar
+      .container
+        a.navbar-brand(href='/')
+          img(src='/placeholder.jpg', alt='BulletIt Logo')
+          span BulletIt
+        
+        ul.navbar-links
+          li
+            a(href='/') Home
+          li
+            a(href='/patch') Review
+          li
+            button#theme-toggle(class='btn-secondary', type='button', title='Toggle dark mode', style='padding: 0.4rem 0.8rem; font-size: 1rem;') 🌙
+
+    main(style='flex: 1; overflow-y: auto;')
+      .container
+        block content
+
+    script.
+      // Dark mode toggle
+      const themeToggle = document.getElementById('theme-toggle');
+      const body = document.body;
+      const isDark = localStorage.getItem('theme') === 'dark';
+      
+      if (isDark) {
+        body.classList.add('dark-theme');
+        themeToggle.textContent = '☀️';
+      }
+      
+      themeToggle.addEventListener('click', function() {
+        body.classList.toggle('dark-theme');
+        const isDarkNow = body.classList.contains('dark-theme');
+        localStorage.setItem('theme', isDarkNow ? 'dark' : 'light');
+        themeToggle.textContent = isDarkNow ? '☀️' : '🌙';
+      });
+
+      // Toast notification system
+      const toastParams = new URLSearchParams(window.location.search);
+      const toastType = toastParams.get('toast');
+      if (toastType) {
+        const toastMessages = {
+          'archived': { text: 'Bulletin sent for archive review', color: '#f59e0b' },
+          'revived': { text: 'Bulletin revived successfully', color: '#10b981' },
+          'edited': { text: 'Changes sent for review', color: '#3b82f6' }
+        };
+        
+        if (toastMessages[toastType]) {
+          const toast = document.createElement('div');
+          toast.className = `toast-notification toast-${toastType}`;
+          toast.innerHTML = `<span>${toastMessages[toastType].text}</span><button class="toast-close" type="button">\u2715</button>`;
+          document.body.appendChild(toast);
+          
+          const closeToast = () => {
+            toast.classList.add('toast-fade');
+            setTimeout(() => toast.remove(), 300);
+          };
+          
+          toast.querySelector('.toast-close').addEventListener('click', closeToast);
+          setTimeout(closeToast, 3500);
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }
+      }
+
+      // 67 jumpscare
+      const trigger67 = document.getElementById('egg-67-trigger');
+      if (trigger67) {
+        trigger67.style.cursor = 'help';
+        trigger67.style.userSelect = 'none';
+        
+        let clickCount = 0;
+        let clickTimer = null;
+        let targetClicks = Math.floor(Math.random() * 2) + 6;
+
+        trigger67.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          
+          // Increment the click counter
+          clickCount++;
+          
+          // Reset the timer and the target if they stop clicking
+          clearTimeout(clickTimer);
+          clickTimer = setTimeout(() => {
+            clickCount = 0;
+            targetClicks = Math.floor(Math.random() * 2) + 6; // Reroll the dice
+          }, 600);
+
+          // Check if they hit the randomized threshold
+          if (clickCount === targetClicks) {
+            // Reset the counter and reroll the target for next time
+            clickCount = 0;
+            targetClicks = Math.floor(Math.random() * 2) + 6; 
+            
+            // START
+            document.body.classList.add('is-shaking');
+
+            // 67 Jumpscare
+            document.body.insertAdjacentHTML('beforeend', `<img src="/67.jpg" style="position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:99999;object-fit:cover;pointer-events:none;mix-blend-mode:difference;filter:contrast(300%) brightness(60%) saturate(200%);" onload="setTimeout(()=>this.remove(), 300)">`);
+
+            setTimeout(() => {
+              document.body.classList.remove('is-shaking');
+            }, 2000);
+            
+            // Confetti
+            const scaryColors = ['#ff0000', '#8b0000', '#4a0000', '#000000', '#1a0000'];
+            
+            for (let i = 0; i < 20; i++) { 
+              const confetti = document.createElement('div');
+              confetti.textContent = '67';
+              confetti.style.position = 'fixed';
+              
+              confetti.style.top = '50%';
+              confetti.style.left = '50%';
+              
+              confetti.style.fontSize = (Math.random() * 60 + 40) + 'px'; 
+              confetti.style.color = scaryColors[Math.floor(Math.random() * scaryColors.length)];
+              confetti.style.fontFamily = '"Courier New", Courier, monospace'; 
+              
+              confetti.style.pointerEvents = 'none';
+              confetti.style.zIndex = '9998';
+              confetti.style.fontWeight = '900';
+              confetti.style.opacity = '1';
+              
+              confetti.style.willChange = 'transform, opacity';
+              confetti.style.backfaceVisibility = 'hidden';
+              
+              confetti.style.transform = `translate(-50%, -50%) scale(0.1)`;
+              
+              confetti.style.transition = 'transform 1.5s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 1.5s ease-out';
+              
+              document.body.appendChild(confetti);
+              
+              requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                  const angle = Math.random() * Math.PI * 2;
+                  const distance = Math.random() * 800 + 400; // Fly far past the screen edges
+                  const xMove = Math.cos(angle) * distance;
+                  const yMove = Math.sin(angle) * distance;
+                  const massiveScale = Math.random() * 4 + 2;
+                  const rotation = Math.random() * 720 - 360;
+                  
+                  // Use translate3d to force hardware rendering
+                  confetti.style.transform = `translate3d(calc(-50% + ${xMove}px), calc(-50% + ${yMove}px), 0) scale(${massiveScale}) rotate(${rotation}deg)`;
+                  confetti.style.opacity = '0';
+                });
+              });
+              
+              // Clean up DOM to prevent memory leaks
+              setTimeout(() => confetti.remove(), 1600);
+            }
+          }
+        });
+      }
+
+      // Archive pending notification
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('success') === 'archive_pending') {
+        const toast = document.createElement('div');
+        toast.className = 'toast-archive';
+        toast.innerHTML = '<span>Archive request sent for review.</span><button class="toast-close" type="button" aria-label="Close">✕</button>';
+        document.body.appendChild(toast);
+        
+        toast.querySelector('.toast-close').addEventListener('click', () => {
+          toast.classList.add('toast-hide');
+          setTimeout(() => toast.remove(), 300);
+        });
+        
+        setTimeout(() => {
+          toast.classList.add('toast-hide');
+          setTimeout(() => toast.remove(), 300);
+        }, 3000);
+        
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
