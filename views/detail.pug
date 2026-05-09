@@ -1,7 +1,12 @@
 extends layout
 
 block content
-  span #{bullet.content}
+  p #{bullet.content}
+  div
+    if bullet.active_at !== null
+      p Active: #{new Date(bullet.active_at * 1000).toLocaleString()}
+    if bullet.expire_at !== null
+      p Expire: #{new Date(bullet.expire_at * 1000).toLocaleString()}
   form(hx-patch='/' + bullet.id, hx-target='#response', hx-target-error='#response', hx-select='#error', hx-swap='innerHTML')
     if bullet.is_active
       input(name='active', type='hidden', value='0')
@@ -13,6 +18,17 @@ block content
   //-   button(type='submit') Delete
   form(hx-patch='/' + bullet.id, hx-target='#response', hx-target-error='#response', hx-select='#error', hx-swap='innerHTML')
     textarea(name='content', placeholder='Details') #{bullet.content}
+    if bullet.is_active
+      input(id='active', name='active', type="checkbox" checked)
+    else
+      input(id='active', name='active', type="checkbox")
+    label(for='active') Set active
+    br
+    label(for='active_at') Active at:
+    input(id='active_at', name='active_at', type='datetime-local')
+    br
+    label(for='expire_at') Expires at:
+    input(id='expire_at', name='expire_at', type='datetime-local')
     button(type='submit') Edit
   div#response
 
@@ -20,9 +36,14 @@ block content
     each patch in history
       li
         if patch.content !== null
-          span #{patch.content}
+          p #{patch.content}
         if patch.is_active !== null
           if patch.is_active
             input(type="checkbox", checked, disabled)
           else
             input(type="checkbox", disabled)
+        div
+          if patch.active_at !== null
+            p Active: #{new Date(patch.active_at * 1000).toLocaleString()}
+          if patch.expire_at !== null
+            p Expire: #{new Date(patch.expire_at * 1000).toLocaleString()}

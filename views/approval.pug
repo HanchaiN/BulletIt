@@ -4,7 +4,9 @@ block content
   div#response
   ul#patches(hx-get='/patch', hx-trigger='refreshPatch', hx-target='#patches', hx-select='#patches', hx-swap='outerHTML')
     each bullet in list
-      li [#{bullet.id}.v#{bullet.version}] #{bullet.content}
+      li 
+        a(href='/' + bullet.id + '/detail') [#{bullet.id}.v#{bullet.version}]
+        span #{bullet.content}
         if bullet.is_active
           input(type="checkbox", checked, disabled)
         else
@@ -19,6 +21,11 @@ block content
                   input(type="checkbox", checked, disabled)
                 else
                   input(type="checkbox", disabled)
+              div
+                if patch.active_at !== null
+                  p Active: #{new Date(patch.active_at * 1000).toLocaleString()}
+                if patch.expire_at !== null
+                  p Expire: #{new Date(patch.expire_at * 1000).toLocaleString()}
               form(hx-post='/patch/' + patch.id + '/approve', hx-target='#response', hx-target-error='#response', hx-select='#error', hx-swap='innerHTML')
                 button(type='submit') Accept
               form(hx-delete='/patch/' + patch.id, hx-target='#response', hx-target-error='#response', hx-select='#error', hx-swap='innerHTML')

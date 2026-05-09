@@ -16,15 +16,18 @@ router.get('/', function (req, res) {
  * Body: { content: string }
  */
 router.post('/', function (req, res) {
-  const { content } = req.body;
-  
-  if (!content || typeof content !== 'string' || content.trim() === '') {
+  const patch = {
+    content: req.body.content ?? null,
+    is_active: (req.body.active ?? null) === null ? null : req.body.active !== '0',
+    expire_at: req.body.expire_at ? (Date.parse(req.body.expire_at) / 1000 || null) : null,
+    active_at: req.body.active_at ? (Date.parse(req.body.active_at) / 1000 || null) : null,
+  }
+  if (!patch.content || typeof patch.content !== 'string' || patch.content.trim() === '') {
     const err = new Error('Content is required and must be a non-empty string');
     err.status = 400;
     throw err;
   }
-  
-  const patchId = res.app.locals.database.patch_bullet_create(content);
+  const patchId = res.app.locals.database.patch_bullet_create_create(patch);
   res.status(202).render('error', { message: `Bullet patch ${patchId} created and pending approval`, error: {} });
 });
 
@@ -49,31 +52,23 @@ router.post('/search', function (req, res) {
  * Body: { active: '0' (archive) or '1' (unarchive), content: string }
  */
 router.patch('/:id', function (req, res) {
-  const bulletId = parseInt(req.params.id, 10);
+  const bulletId = Number.parseInt(req.params.id, 10);
   
-  if (isNaN(bulletId)) {
+  if (Number.isNaN(bulletId)) {
     const err = new Error('Invalid bullet ID');
     err.status = 400;
     throw err;
   }
 
-  const isActive = (req.body.active ?? null) === null ? null : req.body.active !== '0';
-  const content = req.body.content ?? null;
-  if (isActive === null && content === null) {
-    const err = new Error('At least one of active or content must be provided');
-    err.status = 400;
-    throw err;
-  }
-
   let patchId;
+  const patch = {
+    content: req.body.content ?? null,
+    is_active: (req.body.active ?? null) === null ? null : req.body.active !== '0',
+    expire_at: req.body.expire_at ? (Date.parse(req.body.expire_at) / 1000 || null) : null,
+    active_at: req.body.active_at ? (Date.parse(req.body.active_at) / 1000 || null) : null,
+  }
   try {
-    if (content === null) {
-      patchId = res.app.locals.database.patch_bullet_create_active_change(bulletId, isActive);
-    } else if (isActive === null) {
-      patchId = res.app.locals.database.patch_bullet_create_content_change(bulletId, content);
-    } else {
-      patchId = res.app.locals.database.patch_bullet_create_full_change(bulletId, content, isActive);
-    }
+    patchId = res.app.locals.database.patch_bullet_create_update(bulletId, patch);
   } catch (err) {
     if (err.code === 'DB_NO_CHANGE') {
       err.status = 404;
@@ -87,9 +82,9 @@ router.patch('/:id', function (req, res) {
  * DELETE /:id - Remove a bullet directly
  */
 router.delete('/:id', authMiddleware, function (req, res, next) {
-  const bulletId = parseInt(req.params.id, 10);
+  const bulletId = Number.parseInt(req.params.id, 10);
   
-  if (isNaN(bulletId)) {
+  if (Number.isNaN(bulletId)) {
     const err = new Error('Invalid bullet ID');
     err.status = 400;
     throw err;
@@ -110,9 +105,9 @@ router.delete('/:id', authMiddleware, function (req, res, next) {
  * GET /:id/detail - View detail of a bullet
  */
 router.get('/:id/detail', function (req, res) {
-  const bulletId = parseInt(req.params.id, 10);
+  const bulletId = Number.parseInt(req.params.id, 10);
   
-  if (isNaN(bulletId)) {
+  if (Number.isNaN(bulletId)) {
     const err = new Error('Invalid bullet ID');
     err.status = 400;
     throw err;
@@ -136,9 +131,9 @@ router.get('/patch', function (req, res) {
  * Atomically applies the patch and rejects competing patches
  */
 router.post('/patch/:id/approve', authMiddleware, function (req, res) {
-  const patchId = parseInt(req.params.id, 10);
+  const patchId = Number.parseInt(req.params.id, 10);
   
-  if (isNaN(patchId)) {
+  if (Number.isNaN(patchId)) {
     const err = new Error('Invalid patch ID');
     err.status = 400;
     throw err;
@@ -161,9 +156,9 @@ router.post('/patch/:id/approve', authMiddleware, function (req, res) {
  * DELETE /patch/:id - Reject a patch
  */
 router.delete('/patch/:id', authMiddleware, function (req, res) {
-  const patchId = parseInt(req.params.id, 10);
+  const patchId = Number.parseInt(req.params.id, 10);
   
-  if (isNaN(patchId)) {
+  if (Number.isNaN(patchId)) {
     const err = new Error('Invalid patch ID');
     err.status = 400;
     throw err;

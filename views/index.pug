@@ -19,6 +19,14 @@ block content
 
   form(hx-post='/', hx-target='#response', hx-target-error='#response', hx-select='#error', hx-swap='innerHTML')
     textarea(name='content', placeholder='Details')
+    input(id='active', name='active', type="checkbox" checked)
+    label(for='active') Set active
+    br
+    label(for='active_at') Active at:
+    input(id='active_at', name='active_at', type='datetime-local')
+    br
+    label(for='expire_at') Expires at:
+    input(id='expire_at', name='expire_at', type='datetime-local')
     button(type='submit') Add bulletin
   div#response
 
