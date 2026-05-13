@@ -1,19 +1,19 @@
 extends layout
 
 block content
-  .card(style='border-left: 4px solid var(--danger); background: rgba(239, 68, 68, 0.05);')
-    h2(style='color: var(--danger); margin-top: 0;') ⚠ Error
-    p#error(style='font-size: 1.1rem; font-weight: 600; color: var(--gray-900);')= message
+  .card.error-card
+    h2 ⚠ Error
+    p#error= message
     
     if error && error.status
-      p.text-small(style='margin: 0.5rem 0;')
+      p.error-status
         strong Status Code:
-        code(style='font-family: monospace; background: var(--gray-100); padding: 0.2rem 0.4rem; border-radius: var(--radius-sm);')= ' ' + error.status
+        code= ' ' + error.status
 
-    if error && error.stack
-      details(style='margin-top: var(--spacing-md);')
-        summary(style='cursor: pointer; font-weight: 600; color: var(--gray-600); padding: var(--spacing-sm); border-radius: var(--radius-md); hover:background: var(--gray-100);') View Stack Trace
-        pre(style='background: var(--gray-100); padding: var(--spacing-lg); border-radius: var(--radius-md); overflow-x: auto; font-size: 0.85rem; margin-top: var(--spacing-md); color: var(--gray-800); border-left: 3px solid var(--warning);')= error.stack
+    if error && error.stack && process.env.NODE_ENV === 'development'
+      details.error-stack-wrapper
+        summary.error-stack-toggle View Stack Trace
+        pre.error-stack= error.stack
 
     div(style='margin-top: var(--spacing-xl);')
-      a(href='/', class='btn-primary') ← Back to Home
+      a.btn.btn-primary(href='/') ← Back to Home

@@ -1,0 +1,34 @@
+extends layout
+
+block content
+  if bullet
+    h1 Bulletin details
+    .card
+      //- Moved Topic to Top
+      h2(style="margin-bottom: 1rem; padding: 1.5rem 1.5rem 0 1.5rem; font-size: 1.75rem; border-bottom: 1px solid var(--border-main); padding-bottom: 1rem;")= bullet.title || 'Untitled'
+
+      if bullet.image_url
+        - const ext = bullet.media_ext || bullet.image_url.split('.').pop().toLowerCase();
+        figure.card-image.media-card
+          if ext === 'pdf'
+            embed.media-embed-clean(src=bullet.image_url + '#toolbar=0', type='application/pdf', loading='lazy')
+            a.btn.btn-primary(href=bullet.image_url, target="_blank", rel="noopener noreferrer") 📄 Open PDF in New Tab
+          else if ext === 'mp4' || ext === 'mov'
+            video.media-embed-clean(src=bullet.image_url, controls, loading='lazy')
+          else
+            img.media-embed-clean(src=bullet.image_url, alt=(bullet.title || 'Bulletin attachment'), loading='lazy')
+      article(style="padding-top: 1.5rem;")
+        p.bulletin-text= bullet.content
+      .bulletin-meta-row
+        span.badge(class=bullet.is_active ? 'badge-success' : 'badge-gray')
+          = bullet.is_active ? 'Active' : 'Archived'
+      .form-actions
+        a.btn.btn-primary(href=`/bullet/${bullet.id}/edit`) Edit
+        form.archive-form(method='POST', action=`/${bullet.id}`, enctype='multipart/form-data')
+          input(type='hidden', name='active', value=bullet.is_active ? 'false' : 'true')
+          button.btn(type='submit', class=bullet.is_active ? 'btn-danger' : 'btn-primary')= bullet.is_active ? 'Archive' : 'Revive'
+        a.btn.btn-secondary(href='/' + bullet.id + '/history') History
+        a.btn.btn-secondary(href='/') Back home
+  else
+    h1 Bulletin not found
+    p The requested bulletin could not be loaded.

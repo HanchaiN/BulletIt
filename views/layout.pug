@@ -6,14 +6,19 @@ html
     title= title
     link(rel="stylesheet", href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css")
     link(rel="stylesheet", href="/style.css")
+    script.
+      // Instant Night Mode (Prevents white flashing)
+      if (localStorage.getItem('theme') === 'dark') {
+        document.documentElement.classList.add('dark-theme');
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
     script(src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.8/dist/htmx.min.js", integrity="sha384-/TgkGk7p307TH7EXJDuUlgG3Ce1UVolAOFopFekQkkXihi5u/6OCvVKyz1W+idaz", crossorigin="anonymous")
     script(src="https://cdn.jsdelivr.net/npm/htmx-ext-response-targets@2.0.4", integrity="sha384-T41oglUPvXLGBVyRdZsVRxNWnOOqCynaPubjUVjxhsjFTKrFJGEMm3/0KGmNQ+Pg", crossorigin="anonymous")
 
-  body(hx-ext="response-targets", style='display: flex; flex-direction: column; height: 100vh;')
+  body.app-shell(hx-ext="response-targets")
     nav.navbar
       .container
         a.navbar-brand(href='/')
-          img(src='/placeholder.jpg', alt='BulletIt Logo')
           span BulletIt
         
         ul.navbar-links
@@ -22,165 +27,228 @@ html
           li
             a(href='/patch') Review
           li
-            button#theme-toggle(class='btn-secondary', type='button', title='Toggle dark mode', style='padding: 0.4rem 0.8rem; font-size: 1rem;') 🌙
+            button#theme-toggle(class='btn-secondary nav-action-btn', type='button', title='Toggle dark mode') 🌙
 
-    main(style='flex: 1; overflow-y: auto;')
+    main.app-main
       .container
         block content
 
     script.
-      // Dark mode toggle
-      const themeToggle = document.getElementById('theme-toggle');
-      const body = document.body;
-      const isDark = localStorage.getItem('theme') === 'dark';
-      
-      if (isDark) {
-        body.classList.add('dark-theme');
-        themeToggle.textContent = '☀️';
-      }
-      
-      themeToggle.addEventListener('click', function() {
-        body.classList.toggle('dark-theme');
-        const isDarkNow = body.classList.contains('dark-theme');
-        localStorage.setItem('theme', isDarkNow ? 'dark' : 'light');
-        themeToggle.textContent = isDarkNow ? '☀️' : '🌙';
+      document.addEventListener('DOMContentLoaded', () => {
+        initThemeToggle();
+        initToastSystem();
+        initEasterEgg67();
       });
 
-      // Toast notification system
-      const toastParams = new URLSearchParams(window.location.search);
-      const toastType = toastParams.get('toast');
-      if (toastType) {
-        const toastMessages = {
-          'archived': { text: 'Bulletin sent for archive review', color: '#f59e0b' },
-          'revived': { text: 'Bulletin revived successfully', color: '#10b981' },
-          'edited': { text: 'Changes sent for review', color: '#3b82f6' }
-        };
-        
-        if (toastMessages[toastType]) {
-          const toast = document.createElement('div');
-          toast.className = `toast-notification toast-${toastType}`;
-          toast.innerHTML = `<span>${toastMessages[toastType].text}</span><button class="toast-close" type="button">\u2715</button>`;
-          document.body.appendChild(toast);
-          
-          const closeToast = () => {
-            toast.classList.add('toast-fade');
-            setTimeout(() => toast.remove(), 300);
-          };
-          
-          toast.querySelector('.toast-close').addEventListener('click', closeToast);
-          setTimeout(closeToast, 3500);
-          window.history.replaceState({}, document.title, window.location.pathname);
+      function initThemeToggle() {
+        const themeToggle = document.getElementById('theme-toggle');
+        const htmlEl = document.documentElement;
+
+        if (themeToggle && htmlEl.classList.contains('dark-theme')) {
+          themeToggle.textContent = '☀️';
         }
+
+        if (!themeToggle) return;
+
+        themeToggle.addEventListener('click', () => {
+          htmlEl.classList.toggle('dark-theme');
+          const isDark = htmlEl.classList.contains('dark-theme');
+          htmlEl.setAttribute('data-theme', isDark ? 'dark' : 'light');
+          localStorage.setItem('theme', isDark ? 'dark' : 'light');
+          themeToggle.textContent = isDark ? '☀️' : '🌙';
+        });
       }
 
-      // 67 jumpscare
-      const trigger67 = document.getElementById('egg-67-trigger');
-      if (trigger67) {
-        trigger67.style.cursor = 'help';
-        trigger67.style.userSelect = 'none';
-        
+      function initToastSystem() {
+        const params = new URLSearchParams(window.location.search);
+        const toastType = params.get('toast');
+        const successType = params.get('success');
+
+        const toastMap = {
+          approved: { msg: '✓ Patch accepted!', cls: 'toast-revive' },
+          rejected: { msg: '✗ Patch rejected.', cls: 'toast-error' },
+          archived: { msg: 'Bulletin archived.', cls: 'toast-archive' },
+          revived: { msg: 'Bulletin revived.', cls: 'toast-revive' },
+          error: { msg: 'Something went wrong.', cls: 'toast-error' }
+        };
+
+        const notificationData = toastMap[toastType] || (successType === 'patch_created' ? { msg: 'Your bulletin has been submitted!', cls: 'toast-success' } : null);
+
+        if (!notificationData) return;
+
+        const toast = document.createElement('div');
+        toast.className = `toast-notification ${notificationData.cls}`;
+        toast.innerHTML = `<span>${notificationData.msg}</span><button class="toast-close" type="button" aria-label="Close">✕</button>`;
+        document.body.appendChild(toast);
+
+        const closeToast = () => {
+          toast.style.opacity = '0';
+          toast.style.transform = 'translateX(100%)';
+          setTimeout(() => toast.remove(), 300);
+        };
+
+        toast.querySelector('.toast-close')?.addEventListener('click', closeToast);
+        setTimeout(closeToast, 4000);
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+
+      function initEasterEgg67() {
+        const trigger = document.getElementById('egg-67-trigger');
+        if (!trigger) return;
+
+        trigger.style.cursor = 'help';
+        trigger.style.userSelect = 'none';
+
         let clickCount = 0;
         let clickTimer = null;
         let targetClicks = Math.floor(Math.random() * 2) + 6;
 
-        trigger67.addEventListener('click', (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          
-          // Increment the click counter
-          clickCount++;
-          
-          // Reset the timer and the target if they stop clicking
+        trigger.addEventListener('click', (event) => {
+          clickCount += 1;
           clearTimeout(clickTimer);
+
           clickTimer = setTimeout(() => {
             clickCount = 0;
-            targetClicks = Math.floor(Math.random() * 2) + 6; // Reroll the dice
+            targetClicks = Math.floor(Math.random() * 2) + 6;
           }, 600);
 
-          // Check if they hit the randomized threshold
-          if (clickCount === targetClicks) {
-            // Reset the counter and reroll the target for next time
-            clickCount = 0;
-            targetClicks = Math.floor(Math.random() * 2) + 6; 
-            
-            // START
-            document.body.classList.add('is-shaking');
+          if (clickCount !== targetClicks) return;
 
-            // 67 Jumpscare
-            document.body.insertAdjacentHTML('beforeend', `<img src="/67.jpg" style="position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:99999;object-fit:cover;pointer-events:none;mix-blend-mode:difference;filter:contrast(300%) brightness(60%) saturate(200%);" onload="setTimeout(()=>this.remove(), 300)">`);
+          event.preventDefault();
+          clickCount = 0;
+          triggerChaosAnimation();
+        });
+      }
 
-            setTimeout(() => {
-              document.body.classList.remove('is-shaking');
-            }, 2000);
-            
-            // Confetti
-            const scaryColors = ['#ff0000', '#8b0000', '#4a0000', '#000000', '#1a0000'];
-            
-            for (let i = 0; i < 20; i++) { 
-              const confetti = document.createElement('div');
-              confetti.textContent = '67';
-              confetti.style.position = 'fixed';
-              
-              confetti.style.top = '50%';
-              confetti.style.left = '50%';
-              
-              confetti.style.fontSize = (Math.random() * 60 + 40) + 'px'; 
-              confetti.style.color = scaryColors[Math.floor(Math.random() * scaryColors.length)];
-              confetti.style.fontFamily = '"Courier New", Courier, monospace'; 
-              
-              confetti.style.pointerEvents = 'none';
-              confetti.style.zIndex = '9998';
-              confetti.style.fontWeight = '900';
-              confetti.style.opacity = '1';
-              
-              confetti.style.willChange = 'transform, opacity';
-              confetti.style.backfaceVisibility = 'hidden';
-              
-              confetti.style.transform = `translate(-50%, -50%) scale(0.1)`;
-              
-              confetti.style.transition = 'transform 1.5s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 1.5s ease-out';
-              
-              document.body.appendChild(confetti);
-              
-              requestAnimationFrame(() => {
-                requestAnimationFrame(() => {
-                  const angle = Math.random() * Math.PI * 2;
-                  const distance = Math.random() * 800 + 400; // Fly far past the screen edges
-                  const xMove = Math.cos(angle) * distance;
-                  const yMove = Math.sin(angle) * distance;
-                  const massiveScale = Math.random() * 4 + 2;
-                  const rotation = Math.random() * 720 - 360;
-                  
-                  // Use translate3d to force hardware rendering
-                  confetti.style.transform = `translate3d(calc(-50% + ${xMove}px), calc(-50% + ${yMove}px), 0) scale(${massiveScale}) rotate(${rotation}deg)`;
-                  confetti.style.opacity = '0';
-                });
-              });
-              
-              // Clean up DOM to prevent memory leaks
-              setTimeout(() => confetti.remove(), 1600);
-            }
+      function triggerChaosAnimation() {
+        document.body.classList.add('is-shaking');
+
+        document.body.insertAdjacentHTML('beforeend', `<img src="/67.jpg" style="position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:99999;object-fit:cover;pointer-events:none;mix-blend-mode:difference;filter:contrast(300%) brightness(60%) saturate(200%);" onload="setTimeout(()=>this.remove(), 300)">`);
+        setTimeout(() => document.body.classList.remove('is-shaking'), 2000);
+
+        const colors = ['#ff0000', '#8b0000', '#4a0000', '#000000', '#1a0000'];
+        for (let i = 0; i < 20; i += 1) {
+          const confetti = document.createElement('div');
+          confetti.textContent = '67';
+          confetti.style.cssText = `position:fixed;top:50%;left:50%;font-size:${Math.random() * 60 + 40}px;color:${colors[Math.floor(Math.random() * colors.length)]};font-family:monospace;pointer-events:none;z-index:9998;font-weight:900;opacity:1;transform:translate(-50%,-50%) scale(0.1);transition:transform 1.5s cubic-bezier(0.2,0.8,0.2,1),opacity 1.5s ease-out;`;
+          document.body.appendChild(confetti);
+
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              const angle = Math.random() * Math.PI * 2;
+              const distance = Math.random() * 800 + 400;
+              const x = Math.cos(angle) * distance;
+              const y = Math.sin(angle) * distance;
+              const scale = Math.random() * 4 + 2;
+              const rotation = Math.random() * 720 - 360;
+              confetti.style.transform = `translate3d(calc(-50% + ${x}px), calc(-50% + ${y}px), 0) scale(${scale}) rotate(${rotation}deg)`;
+              confetti.style.opacity = '0';
+            });
+          });
+
+          setTimeout(() => confetti.remove(), 1600);
+        }
+      }
+
+    dialog#image-lightbox
+      article(style="padding: 0; background: transparent; box-shadow: none; max-width: 90vw; text-align: center; position: relative;")
+        a.close-lightbox(href="#", aria-label="Close", style="position: absolute; top: -2.5rem; right: 0; color: white; font-size: 2rem; text-decoration: none; cursor: pointer; z-index: 1000;") ✕
+        img#lightbox-img(src="", style="max-width: 100%; max-height: 85vh; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); object-fit: contain;")
+
+    script.
+      document.addEventListener('DOMContentLoaded', () => {
+        const lightbox = document.getElementById('image-lightbox');
+        const lightboxImg = document.getElementById('lightbox-img');
+        const closeBtn = document.querySelector('.close-lightbox');
+
+        // Close logic
+        const closeLightbox = (e) => {
+          if (e) e.preventDefault();
+          lightbox.removeAttribute('open');
+        };
+        closeBtn.addEventListener('click', closeLightbox);
+        lightbox.addEventListener('click', (e) => {
+          if (e.target.tagName !== 'IMG') closeLightbox();
+        });
+
+        // Open logic for all thumbnails
+        document.addEventListener('click', (e) => {
+          if (e.target.tagName === 'IMG' && (e.target.classList.contains('list-thumbnail') || e.target.classList.contains('proposed-media-thumbnail') || e.target.classList.contains('bullet-thumbnail'))) {
+            e.preventDefault();
+            lightboxImg.src = e.target.src;
+            lightbox.setAttribute('open', 'true');
           }
         });
-      }
 
-      // Archive pending notification
-      const params = new URLSearchParams(window.location.search);
-      if (params.get('success') === 'archive_pending') {
-        const toast = document.createElement('div');
-        toast.className = 'toast-archive';
-        toast.innerHTML = '<span>Archive request sent for review.</span><button class="toast-close" type="button" aria-label="Close">✕</button>';
-        document.body.appendChild(toast);
-        
-        toast.querySelector('.toast-close').addEventListener('click', () => {
-          toast.classList.add('toast-hide');
-          setTimeout(() => toast.remove(), 300);
+        let isAnimatingEgg = false;
+        document.addEventListener('submit', (e) => {
+          const textarea = e.target.querySelector('.main-textarea');
+          if (!textarea) return;
+          const text = textarea.value.toLowerCase().trim();
+
+          if (text.includes('sahur') && !isAnimatingEgg) {
+            e.preventDefault();
+            isAnimatingEgg = true;
+            const blackout = document.createElement('div');
+            blackout.style.cssText = 'position:fixed;inset:0;background:#000;z-index:99990;width:100%;height:100%;';
+            document.body.appendChild(blackout);
+
+            setTimeout(() => {
+              const tungContainer = document.createElement('div');
+              tungContainer.innerHTML = '<img src="/tung.png" onerror="this.src=\'data:image/svg+xml,<svg xmlns=%22[http://www.w3.org/2000/svg%22](http://www.w3.org/2000/svg%22) width=%22100%25%22 height=%22100%25%22><rect fill=%22%23000%22 width=%22100%25%22 height=%22100%25%22/><text x=%2250%25%22 y=%2250%25%22 font-size=%2210vw%22 font-weight=%22900%22 fill=%22%23f00%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22>TUNGTUNG</text></svg>\'"/>';
+              tungContainer.style.cssText = 'position:fixed;inset:0;z-index:99995;mix-blend-mode:difference;background:#000;display:flex;justify-content:center;align-items:center;overflow:hidden;pointer-events:none;width:100%;height:100%;box-sizing:border-box;';
+              const img = tungContainer.querySelector('img');
+              img.style.cssText = 'max-width:85vw; max-height:85vh; width:auto; height:auto; display:block; margin:auto; object-fit:contain; filter:invert(1) contrast(400%) grayscale(100%) drop-shadow(0 0 100px #f00); animation:shake-67 0.05s infinite alternate;';
+              document.body.appendChild(tungContainer);
+
+              const scarierText = document.createElement('div');
+              scarierText.innerHTML = 'W A K E &nbsp; U P<br>I T &nbsp; I S &nbsp; T I M E';
+              scarierText.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);font-size:min(12vw, 15vh);font-weight:900;color:#f00;text-align:center;line-height:1.1;z-index:99999;mix-blend-mode:screen;pointer-events:none;font-family:"Courier New",monospace;text-shadow:15px 0 0 #00f, -15px 0 0 #0f0;animation:shake-67 0.08s infinite alternate-reverse;width:100%;max-width:100%;padding:0 1rem;box-sizing:border-box;';
+              document.body.appendChild(scarierText);
+
+              const crtOverlay = document.createElement('div');
+              crtOverlay.style.cssText = 'position:fixed;inset:0;z-index:99999;pointer-events:none;background:linear-gradient(rgba(18,16,16,0) 50%, rgba(0,0,0,0.6) 50%);background-size:100% 4px;width:100%;height:100%;';
+              document.body.appendChild(crtOverlay);
+
+              let strobeCount = 0;
+              const strobe = setInterval(() => {
+                document.body.style.backgroundColor = strobeCount % 2 === 0 ? '#000' : '#fff';
+                scarierText.style.opacity = strobeCount % 2 === 0 ? '1' : '0.2';
+                img.style.filter = strobeCount % 2 === 0 ? 'invert(1) contrast(400%) grayscale(100%) drop-shadow(0 0 100px #f00)' : 'contrast(500%) sepia(100%) hue-rotate(300deg)';
+                strobeCount++;
+              }, 40);
+
+              setTimeout(() => {
+                clearInterval(strobe);
+                document.body.style.backgroundColor = '';
+                blackout.remove();
+                crtOverlay.remove();
+                tungContainer.remove();
+                scarierText.remove();
+                textarea.value = '';
+                isAnimatingEgg = false;
+              }, 2200);
+            }, 800);
+          } else if ((text.includes('skibidi') || text.includes('sigma') || text.includes('rizz')) && !isAnimatingEgg) {
+            e.preventDefault();
+            isAnimatingEgg = true;
+            textarea.value = '';
+            document.body.style.backgroundColor = '#8a0303';
+            document.body.style.animation = 'shake-67 0.2s ease-in-out 3';
+
+            for(let i = 0; i < 15; i++) {
+              const particle = document.createElement('div');
+              particle.innerText = 'ACCESS DENIED';
+              particle.style.cssText = `position:fixed;top:${Math.random()*80 + 10}%;left:${Math.random()*80 + 10}%;transform:translate(-50%, -50%) rotate(${Math.random()*40-20}deg);font-size:clamp(1.5rem, 5vw, 4rem);color:#000;font-weight:900;text-shadow:0 0 10px #f00;z-index:9999;white-space:nowrap;pointer-events:none;`;
+              document.body.appendChild(particle);
+              setTimeout(() => particle.remove(), 1000);
+            }
+
+            setTimeout(() => {
+              document.body.style.backgroundColor = '';
+              document.body.style.animation = '';
+              isAnimatingEgg = false;
+            }, 900);
+          }
         });
-        
-        setTimeout(() => {
-          toast.classList.add('toast-hide');
-          setTimeout(() => toast.remove(), 300);
-        }, 3000);
-        
-        window.history.replaceState({}, document.title, window.location.pathname);
-      }
+      });

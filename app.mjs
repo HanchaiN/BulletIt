@@ -25,7 +25,6 @@ app.locals = {
   database: open(),
 };
 
-
 app.use('/', indexRouter);
 
 // catch 404 and forward to error handler
@@ -33,14 +32,26 @@ app.use(function (req, res, next) {
   next(createError(404));
 });
 
+function smartRedirect(req, res, url) {
+  if (req.get('HX-Request')) {
+    res.setHeader('HX-Redirect', url);
+    return res.status(200).end();
+  }
+  return res.redirect(302, url);
+}
+
 // error handler
 app.use(function (err, req, res, next) {
-  // set locals, only providing error in development
   res.locals.message = err.message;
   res.locals.error = req.app.get('env') === 'development' ? err : {};
 
-  // render the error page
   res.status(err.status || 500);
+
+  // Gracefully handle HTMX errors without shattering the DOM
+  if (req.get('HX-Request')) {
+    return smartRedirect(req, res, '/?toast=error');
+  }
+
   res.render('error');
 });
 

@@ -1,0 +1,107 @@
+extends layout
+
+block content
+  .page-panel
+    .layout-row-between.mb-lg
+      h1 Review Patch ##{patch.id}
+      a.btn.btn-secondary(href='/patch') ← Back to List
+
+    .card(style="padding: 0; overflow: hidden; border-radius: 12px;")
+      - const currentMediaExt = bullet.media_ext || (bullet.image_url ? bullet.image_url.split('.').pop().toLowerCase() : '');
+      - const proposedMediaExt = patch.media_ext || (patch.image_url ? patch.image_url.split('.').pop().toLowerCase() : '');
+
+      .patch-header(style="padding: 1rem 1.5rem; background: var(--bg-surface); border-bottom: 1px solid var(--border-main); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;")
+        div(style="display: flex; align-items: center; gap: 0.75rem;")
+          span.badge(style="background: var(--warning); color: #fff;") Pending Review
+          if bullet.id && String(bullet.id) !== 'null'
+            span.text-muted(style='font-size: 0.9rem; font-family: monospace;')= 'Target: [#' + bullet.id + '.v' + (bullet.version || '1') + ']'
+          else
+            span.badge(style="background: var(--primary-light); color: var(--primary-dark);") New Submission
+
+        .form-actions
+          form(method='POST', action=`/patch/${patch.id}/approve`, class='inline-flex')
+            button.btn.btn-primary(type='submit', style='padding: 0.5rem 1rem;') ✓ Accept
+          form(method='POST', action=`/patch/${patch.id}/reject`, class='inline-flex')
+            button.btn.btn-secondary(type='submit', style='padding: 0.5rem 1rem;') ✕ Reject
+
+      .diff-grid
+        //- LEFT: Current Version
+        .diff-current.diff-panel
+          h4.diff-title Current Version
+          - const isNewSubmission = !bullet.id || String(bullet.id) === 'null';
+
+          if isNewSubmission
+            div(style="background: var(--bg-main); border: 1px dashed var(--border-main); border-radius: 8px; padding: 2rem; color: var(--text-muted); opacity: 0.8;")
+              div(style="font-size: 1.5rem; margin-bottom: 0.5rem;") 📄
+              div(style="font-weight: 600; font-size: 1.1rem; margin-bottom: 0.25rem; color: var(--text-main);") No Previous Version
+              div(style="font-size: 0.9rem; line-height: 1.5;") This is a brand new submission. There is no prior content to compare against.
+          else
+            if bullet.image_url
+              .diff-media-box
+                if currentMediaExt === 'pdf'
+                  embed.bullet-thumbnail(src=bullet.image_url + '#toolbar=0&navpanes=0&scrollbar=0&view=Fit', type='application/pdf', loading='lazy')
+                else if currentMediaExt === 'mp4' || currentMediaExt === 'mov'
+                  video.bullet-thumbnail(src=bullet.image_url, controls, loading='lazy')
+                else
+                  img.bullet-thumbnail(src=bullet.image_url, alt=(bullet.title || 'Current media'), loading='lazy')
+            else
+              div.diff-no-media No Media
+
+            .diff-section
+              span.diff-label Topic
+              div.diff-text= bullet.title || 'Untitled'
+
+            .diff-section
+              span.diff-label Description
+              div.diff-text= bullet.content || 'No description'
+
+            .diff-section
+              span.diff-label Status
+              span.badge(class=bullet.is_active ? 'badge-success' : 'badge-gray')= bullet.is_active ? 'Active' : 'Archived'
+
+        .diff-proposed.diff-panel
+          h4.diff-title(style="color: var(--primary);") Proposed Update
+          if patch.image_url
+            .diff-media-box.diff-updated
+              span.badge.diff-badge MEDIA UPDATED
+              if proposedMediaExt === 'pdf'
+                embed.proposed-media-thumbnail(src=patch.image_url + '#toolbar=0&navpanes=0&scrollbar=0&view=Fit', type='application/pdf', loading='lazy')
+              else if proposedMediaExt === 'mp4' || proposedMediaExt === 'mov'
+                video.proposed-media-thumbnail(src=patch.image_url, controls, loading='lazy')
+              else
+                img.proposed-media-thumbnail(src=patch.image_url, alt=(patch.title || 'Proposed media'), loading='lazy')
+          else if bullet.image_url
+            .diff-media-box.diff-dimmed
+              if currentMediaExt === 'pdf'
+                embed.bullet-thumbnail(src=bullet.image_url + '#toolbar=0&navpanes=0&scrollbar=0&view=Fit', type='application/pdf', loading='lazy')
+              else if currentMediaExt === 'mp4' || currentMediaExt === 'mov'
+                video.bullet-thumbnail(src=bullet.image_url, muted, loading='lazy')
+              else
+                img.bullet-thumbnail(src=bullet.image_url, alt=(bullet.title || 'Current media'), loading='lazy')
+          else
+            .diff-no-media No Media Change
+
+          - const hasTopicChange = patch.title !== null && patch.title !== undefined && patch.title !== bullet.title;
+          .diff-section
+            span.diff-label Topic
+              if hasTopicChange
+                span.diff-updated-text UPDATED
+            div.diff-text(style=hasTopicChange ? 'color: var(--primary); font-weight: 700;' : '')= patch.title !== null ? patch.title : (bullet.title || 'Untitled')
+
+          - const hasContentChange = patch.content && String(patch.content).trim() !== '';
+          .diff-section
+            span.diff-label Description
+              if hasContentChange
+                span.diff-updated-text UPDATED
+            div.diff-text(style=hasContentChange ? 'color: var(--primary); font-weight: 500;' : '')= patch.content !== null ? patch.content : (bullet.content || 'No description')
+
+          //- Proposed Status
+          - const hasStatusChange = patch.is_active !== null && patch.is_active !== undefined && patch.is_active !== bullet.is_active;
+          .diff-section
+            span.diff-label Status
+              if hasStatusChange && !isNewSubmission
+                span.diff-updated-text UPDATED
+
+            div(style="margin-top: 0.5rem;")
+              - const finalStatus = patch.is_active !== null ? patch.is_active : (isNewSubmission ? true : bullet.is_active);
+              span.badge(class=finalStatus ? 'badge-success' : 'badge-gray')= finalStatus ? 'Active' : 'Archived'

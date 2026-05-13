@@ -1,265 +1,45 @@
 extends layout
 
 block content
-  if successMessage
-    div.toast-success
-      span= successMessage
-      button.toast-close(type='button', aria-label='Close') ✕
-
-  h1#egg-67-trigger My Bulletins
+  div.layout-row-between.mb-lg
+    h1#egg-67-trigger My Bulletins
+    a.btn.btn-primary(href='/bullet/new') + Create New
 
   ul.filter-tabs
-    li: a(href='/?q=all', role='button') All
-    li: a(href='/?q=active', role='button') Active
-    li: a(href='/?q=archive', role='button') Archive
-
-  .card
-    form.form-vertical(method='POST', action='/')
-      textarea.main-textarea(name='content', placeholder='Write your new bulletin here...', rows='4', required)
-      .form-actions
-        button(type='submit', class='btn-primary') Add Bulletin
+    li: a(href='/?q=all', class=filter === 'all' ? 'active' : null, role='button') All
+    li: a(href='/?q=active', class=filter === 'active' ? 'active' : null, role='button') Active
+    li: a(href='/?q=archive', class=filter === 'archive' ? 'active' : null, role='button') Archive
 
   div#response
 
   .card
     h3 Bulletins
-    ul#bullets
-      if list.length === 0
-        li.empty-state
-          div.empty-state-icon 📝
-          div.empty-state-text No bulletins yet. Create your first one above!
-      else
-        each val in list
-          li.bulletin-item(data-bulletin-id=val.id, data-bulletin-content=val.content, data-is-active=val.is_active)
-            div.bulletin-row
-              div.bulletin-content
-                div.bulletin-text(class='view-mode-text')= val.content
-                div.bulletin-meta
-                  span.badge(class=val.is_active ? 'badge-success' : 'badge-gray')
-                    = val.is_active ? '✓ Active' : 'Archived'
-              
-              div.bulletin-actions
-                button.btn-action(data-action='edit') Edit
-                if val.is_active
-                  form.archive-form(method='POST', action=`/bulletins/${val.id}/archive`)
-                    button.btn-action(type='submit') Archive
-                else
-                  form.archive-form(method='POST', action=`/bulletins/${val.id}/revive`)
-                    button.btn-action(type='submit') Revive
-                a.btn-action(href='/' + val.id + '/history') History
+    .masonry-grid
+      ul#bullets
+        if list.length === 0
+          li.empty-state
+            div.empty-state-icon 📝
+            div.empty-state-text No bulletins yet. Create your first one above!
+        else
+          each val in (list || [])
+            li.masonry-item.card(data-bulletin-id=val.id)
+              a(href=`/bullet/${val.id}`)
+                if val.image_url
+                  if val.media_ext === 'pdf'
+                    embed.bullet-thumbnail(src=val.image_url + '#toolbar=0&navpanes=0&scrollbar=0&view=Fit', type='application/pdf', loading='lazy', style='pointer-events: none; overflow: hidden; border: none;')
+                  else if val.media_ext === 'mp4' || val.media_ext === 'mov'
+                    video.bullet-thumbnail(src=val.image_url, muted, loop, loading='lazy', onmouseover="this.play()", onmouseout="this.pause()")
+                  else
+                    img.bullet-thumbnail(src=val.image_url, alt=(val.title || 'Bulletin media'), loading='lazy')
+                div.bulletin-content.card-padding
+                  h3(style="margin-bottom: 0.5rem; font-size: 1.25rem;")= val.title || 'Untitled'
+                  div.bulletin-text-truncate= val.content
+                  div.bulletin-meta
+                    span.badge(class=val.is_active ? 'badge-success' : 'badge-gray')
+                      = val.is_active ? '✓ Active' : 'Archived'
+              .form-actions
+                form.archive-form(method='POST', action=`/${val.id}`, enctype='multipart/form-data')
+                  input(type='hidden', name='active', value=val.is_active ? 'false' : 'true')
+                  button.btn.btn-small(type='submit', class=val.is_active ? 'btn-danger' : 'btn-primary')= val.is_active ? 'Archive' : 'Revive'
+                a.btn.btn-secondary(href='/' + val.id + '/history') History
 
-            div.edit-mode-form.hidden
-              textarea.bulletin-edit-input(name='content', placeholder='Edit bulletin...', rows='3')=val.content
-              div.edit-mode-actions
-                button.btn-primary.btn-small(type='button', data-action='save') Save
-                button.btn-secondary.btn-small(type='button', data-action='cancel') Cancel
-
-  script.
-    function setupBulletinListeners() {
-      // Edit button
-      document.querySelectorAll('[data-action="edit"]').forEach(btn => {
-        btn.addEventListener('click', e => {
-          e.preventDefault();
-          const item = btn.closest('.bulletin-item');
-          item.querySelector('.view-mode-buttons').classList.add('hidden');
-          item.querySelector('.edit-mode-form').classList.remove('hidden');
-          item.querySelector('.bulletin-edit-input').focus();
-        });
-      });
-
-      // Cancel button
-      document.querySelectorAll('[data-action="cancel"]').forEach(btn => {
-        btn.addEventListener('click', e => {
-          e.preventDefault();
-          const item = btn.closest('.bulletin-item');
-          item.querySelector('.edit-mode-form').classList.add('hidden');
-          item.querySelector('.view-mode-buttons').classList.remove('hidden');
-          item.querySelector('.bulletin-edit-input').value = item.dataset.bulletinContent;
-        });
-      });
-
-      // Save button
-      document.querySelectorAll('[data-action="save"]').forEach(btn => {
-        btn.addEventListener('click', e => {
-          e.preventDefault();
-          const item = btn.closest('.bulletin-item');
-          const content = item.querySelector('.bulletin-edit-input').value;
-          if (!content.trim()) { alert('Content cannot be empty'); return; }
-          
-          item.querySelector('.view-mode-text').textContent = content;
-          item.dataset.bulletinContent = content;
-          item.querySelector('.edit-mode-form').classList.add('hidden');
-          item.querySelector('.view-mode-buttons').classList.remove('hidden');
-          
-          htmx.ajax('PATCH', '/' + item.dataset.bulletinId, {
-            values: { content },
-            target: '#response',
-            swap: 'innerHTML'
-          });
-        });
-      });
-
-      // File input label update
-      const imageInput = document.getElementById('image-input');
-      if (imageInput) {
-        imageInput.addEventListener('change', e => {
-          if (e.target.files[0]) {
-            const label = e.target.nextElementSibling;
-            label.textContent = '✓ ' + e.target.files[0].name;
-            label.style.opacity = '0.8';
-          }
-        });
-      }
-    }
-
-    function dismissToast() {
-      const toast = document.querySelector('.toast-success');
-      if (!toast) return;
-      setTimeout(() => {
-        toast.classList.add('toast-hide');
-        setTimeout(() => toast.remove(), 300);
-      }, 3000);
-      toast.querySelector('.toast-close')?.addEventListener('click', () => {
-        toast.classList.add('toast-hide');
-        setTimeout(() => toast.remove(), 300);
-      });
-    }
-
-    // Brainrot Easter Egg Engine
-    function setupBrainrotEggs() {
-      const addForm = document.querySelector('.form-vertical');
-      const textarea = document.querySelector('.main-textarea');
-
-      if (addForm && textarea) {
-        addForm.addEventListener('submit', (e) => {
-          const text = textarea.value.toLowerCase().trim();
-          
-          // Brainrot Trigger 1: Tung Tung Tung Sahur - MAXIMUM CHAOS
-          if (text.includes('sahur')) {
-            e.preventDefault();
-            
-            // Spine-chilling screen glitch effect
-            let strobeCount = 0;
-            const strobeInterval = 40; // Even faster
-            let strobe = setInterval(() => {
-              document.body.style.backgroundColor = strobeCount % 2 === 0 ? '#000000' : '#ff00ff';
-              strobeCount++;
-            }, strobeInterval);
-            
-            // Screen shake during strobe
-            document.body.style.animation = 'shake-67 0.2s ease-in-out infinite';
-            
-            // Show tungtung image with terrifying glow
-            const tungtungContainer = document.createElement('div');
-            tungtungContainer.className = 'tungtung-container';
-            tungtungContainer.style.filter = 'brightness(1.5) saturate(2) hue-rotate(45deg)';
-            tungtungContainer.innerHTML = '<img src="/public/tung.png" alt="TUNGTUNG" class="tungtung-image" onerror="this.src=\'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22300%22 height=%22300%22><rect fill=%22%23ff1493%22 width=%22300%22 height=%22300%22/><text x=%2250%25%22 y=%2250%25%22 font-size=%22120%22 font-weight=%22900%22 fill=%22%23ffff00%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22>TUNGTUNG</text></svg>\'"/>';
-            document.body.appendChild(tungtungContainer);
-            
-            // Spawn 80 chaotic brainrot texts with TERRIFYING density
-            for(let i = 0; i < 80; i++) {
-              const word = document.createElement('div');
-              word.className = 'brainrot-text';
-              word.innerText = ['TUNG TUNG TUNG SAHUR', 'SIGMA', '💀', '🔥', 'BASED'][Math.floor(Math.random() * 5)];
-              word.style.position = 'fixed';
-              word.style.top = Math.random() * 100 + 'vh';
-              word.style.left = Math.random() > 0.5 ? '-100vw' : '100vw';
-              word.style.fontSize = (Math.random() * 80 + 40) + 'px';
-              word.style.fontWeight = '900';
-              word.style.color = `hsl(${Math.random() * 360}, 100%, ${Math.random() * 50 + 50}%)`;
-              word.style.zIndex = '9999';
-              word.style.whiteSpace = 'nowrap';
-              word.style.textShadow = `0 0 40px currentColor, 0 0 80px hsl(${Math.random() * 360}, 100%, 50%)`;
-              word.style.pointerEvents = 'none';
-              word.style.letterSpacing = '3px';
-              word.style.opacity = '0.9';
-              word.style.transform = `rotate(${Math.random() * 360}deg) scale(${Math.random() * 0.5 + 0.75})`;
-              
-              // Chaotic animation
-              word.style.animationDelay = (i * 10) + 'ms';
-              word.style.animationDuration = (800 + Math.random() * 1200) + 'ms';
-              
-              document.body.appendChild(word);
-              setTimeout(() => word.remove(), 2200 + (i * 10));
-            }
-            
-            // Terrifying sound warning (visual)
-            setTimeout(() => {
-              clearInterval(strobe);
-              document.body.style.animation = '';
-              document.body.style.backgroundColor = '';
-              tungtungContainer.remove();
-              textarea.value = '';
-              
-              // Premium toast with no inline styles
-              const toast = document.createElement('div');
-              toast.className = 'toast-notification toast-edit';
-              toast.innerHTML = '<span>YOU CALLED UP THE SAHUR</span><button class="toast-close" type="button" aria-label="Close">✕</button>';
-              document.body.appendChild(toast);
-              
-              toast.querySelector('.toast-close')?.addEventListener('click', () => toast.remove());
-              setTimeout(() => toast.remove(), 4000);
-            }, 2000);
-          }
-          
-          // Brainrot Trigger 2: Skibidi Sigma - VIOLENT REJECTION
-          else if (text.includes('skibidi') || text.includes('sigma') || text.includes('rizz')) {
-            e.preventDefault();
-            textarea.value = '';
-            
-            // Intense red flash rejection
-            document.body.style.backgroundColor = '#ff0000';
-            document.body.style.animation = 'shake-67 0.3s ease-in-out 3';
-            
-            // Spawn hostile rejection particles
-            for(let i = 0; i < 20; i++) {
-              const particle = document.createElement('div');
-              particle.className = 'brainrot-text';
-              particle.innerText = '❌ NO ❌';
-              particle.style.position = 'fixed';
-              particle.style.top = Math.random() * 100 + 'vh';
-              particle.style.left = Math.random() * 100 + 'vw';
-              particle.style.fontSize = (Math.random() * 40 + 30) + 'px';
-              particle.style.color = '#ffff00';
-              particle.style.textShadow = '0 0 30px #ff0000';
-              particle.style.zIndex = '9999';
-              particle.style.whiteSpace = 'nowrap';
-              particle.style.pointerEvents = 'none';
-              particle.style.transform = `rotate(${Math.random() * 360}deg)`;
-              particle.style.animation = 'brainrot-text-fly linear 1.2s forwards';
-              particle.style.animationDelay = (i * 30) + 'ms';
-              
-              document.body.appendChild(particle);
-              setTimeout(() => particle.remove(), 1500 + (i * 30));
-            }
-            
-            // Premium toast with no inline styles
-            const toast = document.createElement('div');
-            toast.className = 'toast-notification toast-archive';
-            toast.innerHTML = '<span>⚠️ -1000 AURA </span><button class="toast-close" type="button" aria-label="Close">✕</button>';
-            document.body.appendChild(toast);
-            
-            toast.querySelector('.toast-close')?.addEventListener('click', () => toast.remove());
-            setTimeout(() => toast.remove(), 5000);
-            
-            // Reset
-            setTimeout(() => {
-              document.body.style.backgroundColor = '';
-              document.body.style.animation = '';
-            }, 900);
-          }
-        });
-      }
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-      setupBulletinListeners();
-      dismissToast();
-      setupBrainrotEggs();
-    });
-
-    document.body.addEventListener('htmx:afterSwap', e => {
-      if (['#bullets', '#response'].includes(e.detail.target.id)) {
-        setupBulletinListeners();
-      }
-    });
