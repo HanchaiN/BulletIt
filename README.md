@@ -14,15 +14,14 @@ Maybe one day, by deliverance of omniscient gods, BulletIt can freely identify a
 - [x] Basic CRUD with text content and archiving
 - [x] Require approval before mutations (approval workflow with patch system)
 - [ ] E-mail based auth for admin (admin invites and OTP login)
-- [ ] Longer content for bullet (keep the separated short title)
+- [x] Longer content for bullet (keep the separated short title)
 - [ ] Webhook call daily on new unarchived bullet
-- [ ] Set archive-unarchive ahead of time
+- [x] Set archive-unarchive ahead of time
 - [ ] Better content patch and version management
 
 ## Contributing
 
-For now, this is not a public project.
-However, within the community, contributions are very much appreciated.
+See [CONTRIBUTING](./CONTRIBUTING.md).
 
 ## License
 
