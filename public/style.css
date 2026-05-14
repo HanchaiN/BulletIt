@@ -1281,11 +1281,11 @@ a:not([href]) {
    RESPONSE MESSAGES
    ============================================================ */
 
-#response {
+#error-message {
   margin-bottom: var(--spacing-lg);
 }
 
-#response > * {
+#error-message > * {
   padding: var(--spacing-md);
   border-radius: var(--radius-md);
   margin-bottom: var(--spacing-md);

@@ -1,4 +1,4 @@
-extends layout
+extends ../layout
 
 block content
   if bullet
@@ -11,10 +11,10 @@ block content
 
       .form-wrapper
         .card
-          form#bulletin-form.form-vertical(method='POST', action='/' + bullet.id, enctype='multipart/form-data')
+          form#bulletin-form.form-vertical(method='POST', action=`/bullet/${bullet.id}`, enctype='multipart/form-data')
             
             //- Logic to determine initial state
-            - const hasImage = bullet.image_url ? true : false
+            - const hasImage = bullet.image_uri ? true : false
             
             //- The Upload Zone (Hidden if image already exists)
             .upload-zone#drop-zone(class=hasImage ? 'hidden' : '')
@@ -31,13 +31,7 @@ block content
             //- The Preview Container (Visible if image exists)
             .preview-container#preview-box(class=hasImage ? '' : 'hidden')
               span.preview-label Current File
-              
-              if bullet.media_ext === 'pdf'
-                embed.preview-thumbnail(src=bullet.image_url + '#toolbar=0&navpanes=0&scrollbar=0&view=Fit', type='application/pdf', loading='lazy', style='pointer-events: none; border: none;')
-              else if bullet.media_ext === 'mp4' || bullet.media_ext === 'mov'
-                video.preview-thumbnail(src=bullet.image_url, controls, loading='lazy', style="max-width: 100%; max-height: 250px;")
-              else if bullet.image_url
-                img.preview-thumbnail(src=bullet.image_url, alt=(bullet.title || 'Bulletin media'), loading='lazy')
+              +display-image(bullet.image_uri).preview-thumbnail
 
               button.btn.btn-danger.remove-preview-btn#remove-btn(type="button") ✕ Replace Media
 
@@ -47,6 +41,12 @@ block content
 
             label.form-label(for='content') Description
             textarea.main-textarea(name='content', id='content', maxlength='5000', rows='6', required, class='mb-lg')= bullet.content
+
+            label.form-label(for='active_at') Active at:
+            input(id='active_at', name='active_at', type='datetime-local')
+
+            label.form-label(for='expire_at') Expires at:
+            input(id='expire_at', name='expire_at', type='datetime-local')
 
             .form-actions.full-width
               button.btn.btn-primary#submit-btn(type='submit', style='width: 100%; padding: 0.75rem; font-size: 1rem;') Save Changes

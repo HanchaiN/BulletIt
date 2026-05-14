@@ -3,7 +3,8 @@ extends layout
 block content
   .card.error-card
     h2 ⚠ Error
-    p#error= message
+    p#error
+      span#error-message(hx-swap-oob='true')= message
     
     if error && error.status
       p.error-status

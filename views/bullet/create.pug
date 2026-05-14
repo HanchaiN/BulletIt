@@ -1,4 +1,4 @@
-extends layout
+extends ../layout
 
 block content
   .page-panel
@@ -10,7 +10,7 @@ block content
 
     .form-wrapper
       .card
-        form#bulletin-form.form-vertical(method='POST', action='/', enctype='multipart/form-data')
+        form#bulletin-form.form-vertical(method='POST', action='/bullet', enctype='multipart/form-data')
           
           //- The Upload Zone
           .upload-zone#drop-zone
@@ -36,6 +36,12 @@ block content
           label.form-label(for='content') Description
           textarea.main-textarea(name='content', id='content', placeholder='Description', maxlength='5000', rows='6', required, class='mb-lg')
           
+          label.form-label(for='active_at') Active at:
+          input(id='active_at', name='active_at', type='datetime-local')
+
+          label.form-label(for='expire_at') Expires at:
+          input(id='expire_at', name='expire_at', type='datetime-local')
+
           .form-actions.full-width
             button.btn.btn-primary#submit-btn(type='submit', style='width: 100%; padding: 0.75rem; font-size: 1rem;') Submit Bulletin
 

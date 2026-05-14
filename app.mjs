@@ -3,9 +3,11 @@ import express from 'express';
 import path from 'node:path';
 import cookieParser from 'cookie-parser';
 import logger from 'morgan';
+import crypto from "node:crypto";
 
 import indexRouter from './routes/index.mjs';
 import { open } from './lib/sql/index.mjs';
+import { smartRedirect } from './lib/utils.mjs';
 
 const __dirname = import.meta.dirname;
 
@@ -23,6 +25,12 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.locals = {
   database: open(),
+  auth: {
+    secret: crypto.randomBytes(256),
+    password: {
+      admin: null,
+    }
+  }
 };
 
 app.use('/', indexRouter);
@@ -31,14 +39,6 @@ app.use('/', indexRouter);
 app.use(function (req, res, next) {
   next(createError(404));
 });
-
-function smartRedirect(req, res, url) {
-  if (req.get('HX-Request')) {
-    res.setHeader('HX-Redirect', url);
-    return res.status(200).end();
-  }
-  return res.redirect(302, url);
-}
 
 // error handler
 app.use(function (err, req, res, next) {

@@ -1,0 +1,48 @@
+extends ../layout
+
+block content
+  div.layout-row-between.mb-lg
+    h1#egg-67-trigger My Bulletins
+    a.btn.btn-primary(href='/bullet/create') + Create New
+
+  form(action="/bullet/search" method="POST")#search
+    input(type="search",
+        name="searchterm",
+        placeholder="Begin typing to search...",
+        hx-post="/bullet/search",
+        hx-trigger="keyup changed delay:500ms, search",
+        hx-target="#bullets",
+        hx-select="#bullets",
+        hx-select-oob="#error-message",
+        hx-swap='outerHTML')#searchterm
+    input(name="active", type="checkbox", checked)#active
+    label(for="active") Show Active
+    input(name="archive", type="checkbox")#archive
+    label(for="archive") Show Archive
+
+  div#error-message
+
+  .card
+    h3 Bulletins
+    .masonry-grid
+      ul#bullets(hx-swap-oob='true')
+        if list.length === 0
+          li.empty-state
+            div.empty-state-icon 📝
+            div.empty-state-text No bulletins yet. Create your first one above!
+        else
+          each bullet in list
+            li.masonry-item.card(data-bulletin-id=bullet.id)
+              a(href=`/bullet/${bullet.id}`)
+                if bullet.image_uri
+                  +display-image(bullet.image_uri).bullet-thumbnail
+                div.bulletin-content.card-padding
+                  h3(style="margin-bottom: 0.5rem; font-size: 1.25rem;")= bullet.title || 'Untitled'
+                  div.bulletin-text-truncate= bullet.content
+                  div.bulletin-meta
+                    span.badge(class=bullet.is_active ? 'badge-success' : 'badge-gray')
+                      = bullet.is_active ? '✓ Active' : 'Archived'
+              .form-actions
+                form.archive-form(method='POST', action=`/bullet/${bullet.id}`, enctype='multipart/form-data')
+                  input(type='hidden', name='active', value=bullet.is_active ? 'false' : 'true')
+                  button.btn.btn-small(type='submit', class=bullet.is_active ? 'btn-danger' : 'btn-primary')= bullet.is_active ? 'Archive' : 'Revive'

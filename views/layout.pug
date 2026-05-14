@@ -1,3 +1,21 @@
+mixin display-image(image_uri, thumbnail=true)
+  - const image_type = image_uri?.split('.')?.pop()?.toLowerCase() ?? '';
+  if thumbnail
+    if image_type === 'pdf'
+      embed(src=`${image_uri}#toolbar=0&navpanes=0&scrollbar=0&view=Fit`, type='application/pdf', loading='lazy', style='pointer-events: none; overflow: hidden; border: none;')&attributes(attributes)
+    else if image_type === 'mp4' || image_type === 'mov'
+      video(src=image_uri, muted, loop, loading='lazy', onmouseover="this.play()", onmouseout="this.pause()")&attributes(attributes)
+    else
+      img(src=image_uri, alt='Media', loading='lazy')&attributes(attributes)
+  else
+    if ext === 'pdf'
+      embed(src=`${image_uri}#toolbar=0`, type='application/pdf', loading='lazy')&attributes(attributes)
+    else if ext === 'mp4' || ext === 'mov'
+      video(src=image_uri, controls, loading='lazy')&attributes(attributes)
+    else
+      img(src=image_uri, alt='Media', loading='lazy')&attributes(attributes)
+
+
 doctype html
 html
   head

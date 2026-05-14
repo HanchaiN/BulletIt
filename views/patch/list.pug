@@ -1,0 +1,36 @@
+extends ../layout
+
+block content
+  h1 Review Patches
+
+  div#error
+
+  .masonry-grid
+    ul#bullets
+      if list.length === 0
+        li.empty-state
+          div.empty-state-icon 🥀
+          div.empty-state-text No patches to review
+      else
+        each bullet in list
+          each patch in bullet.patches
+            li.masonry-item.card(style="cursor: pointer; transition: transform 0.2s;")
+              a(href=`/patch/${patch.id}`, style="text-decoration: none; color: inherit; display: block;")
+                - const proposedMediaExt = patch.media_ext || (patch.image_uri ? patch.image_uri.split('.').pop().toLowerCase() : '');
+                - const displayImage = patch.image_uri || bullet.image_uri;
+                - const displayExt = patch.image_uri ? proposedMediaExt : (bullet.media_ext || (bullet.image_uri ? bullet.image_uri.split('.').pop().toLowerCase() : ''));
+
+                if displayImage
+                  div.card-relative
+                    if patch.image_uri
+                      span.badge.media-badge New Media
+                    +display-image(patch.image_uri || bullet.image_uri).bullet-thumbnail
+
+                div(style="padding: 1.5rem; text-align: left;")
+                  div(style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;")
+                    span.badge(style="background: var(--warning); color: white;") Patch ##{patch.id}
+                    if patch.image_uri
+                      span.badge(style="background: var(--primary); color: white; font-size: 0.7rem;") MEDIA UPDATE
+                  h3(style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--text-main);")= patch.title || bullet.title || 'Untitled'
+                  div.bulletin-text-truncate(style="color: var(--text-muted);")= patch.content || bullet.content || 'Status update only'
+                  div(style="margin-top: 1.25rem; color: var(--primary); font-weight: 700; font-size: 0.85rem;") CLICK TO REVIEW

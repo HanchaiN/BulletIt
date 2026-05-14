@@ -1,0 +1,67 @@
+extends ../layout
+
+block content
+  if !bullet
+    h1 Bulletin not found
+    p The requested bulletin could not be loaded.
+  else
+    h1 Bulletin details
+    .card
+      //- Moved Topic to Top
+      h2(style="margin-bottom: 1rem; padding: 1.5rem 1.5rem 0 1.5rem; font-size: 1.75rem; border-bottom: 1px solid var(--border-main); padding-bottom: 1rem;")= bullet.title || 'Untitled'
+
+      if bullet.image_uri
+        figure.card-image.media-card
+          +display-image(bullet.image_uri, false).media-embed-clean
+          a.btn.btn-primary(href=bullet.image_uri, target="_blank", rel="noopener noreferrer") 📄 Open in New Tab
+      article(style="padding-top: 1.5rem;")
+        p.bulletin-text= bullet.content
+      .bulletin-meta-row
+        span.badge(class=bullet.is_active ? 'badge-success' : 'badge-gray')
+          = bullet.is_active ? 'Active' : 'Archived'
+        div
+          if bullet.active_at !== null
+            p Active: #{new Date(bullet.active_at * 1000).toLocaleString()}
+          if bullet.expire_at !== null
+            p Expire: #{new Date(bullet.expire_at * 1000).toLocaleString()}
+      .form-actions
+        a.btn.btn-primary(href=`/bullet/${bullet.id}/edit`) Edit
+        form.archive-form(method='POST', action=`/bullet/${bullet.id}`, enctype='multipart/form-data')
+          input(type='hidden', name='active', value=bullet.is_active ? 'false' : 'true')
+          button.btn(type='submit', class=bullet.is_active ? 'btn-danger' : 'btn-primary')= bullet.is_active ? 'Archive' : 'Revive'
+        a.btn.btn-secondary(href='/') Back home
+      details
+          summary: h3 Change Timeline
+          ul.history-list
+            if history.length === 0
+              li.empty-state
+                .empty-state-icon 📜
+                .empty-state-text No history yet
+            else
+              each patch in history
+                li.history-item
+                  if patch.image_uri
+                    .history-media-container
+                      span(style='font-size: 0.65rem; color: var(--primary); font-weight: 800; text-transform: uppercase;') Media Changed:
+                      +display-image(patch.image_uri).list-thumbnail
+                  div
+                    if patch.title
+                      div.mb-2
+                        strong Title:
+                        br
+                        span= patch.title
+                    if patch.content
+                      div.mb-2
+                        strong Content:
+                        br
+                        span= patch.content
+                    if patch.is_active !== null
+                      div
+                        strong Status:
+                        br
+                        span.badge(class=patch.is_active ? 'badge-success' : 'badge-gray')
+                          = patch.is_active ? '✓ Active' : 'Archived'
+                    if patch.active_at !== null
+                      p Active: #{new Date(patch.active_at * 1000).toLocaleString()}
+                    if patch.expire_at !== null
+                      p Expire: #{new Date(patch.expire_at * 1000).toLocaleString()}

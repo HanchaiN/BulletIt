@@ -1,0 +1,106 @@
+extends ../layout
+
+block content
+  .page-panel
+    .layout-row-between.mb-lg
+      h1 Review Patch ##{patch.id}
+      a.btn.btn-secondary(href='/patch') ← Back to List
+
+    .card(style="padding: 0; overflow: hidden; border-radius: 12px;")
+
+      .patch-header(style="padding: 1rem 1.5rem; background: var(--bg-surface); border-bottom: 1px solid var(--border-main); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;")
+        div(style="display: flex; align-items: center; gap: 0.75rem;")
+          span.badge(style="background: var(--warning); color: #fff;") Pending Review
+          if !bullet
+            span.badge(style="background: var(--primary-light); color: var(--primary-dark);") New Submission
+          else
+            span.text-muted(style='font-size: 0.9rem; font-family: monospace;')= 'Target: [#' + bullet.id + '.v' + (bullet.version || '1') + ']'
+
+        .form-actions
+          form(method='POST', action=`/patch/${patch.id}/approve`, class='inline-flex')
+            button.btn.btn-primary(type='submit', style='padding: 0.5rem 1rem;') ✓ Accept
+          form(method='POST', action=`/patch/${patch.id}/reject`, class='inline-flex')
+            button.btn.btn-secondary(type='submit', style='padding: 0.5rem 1rem;') ✕ Reject
+
+      .diff-grid
+        //- LEFT: Current Version
+        .diff-current.diff-panel
+          h4.diff-title Current Version
+          if !bullet
+            div(style="background: var(--bg-main); border: 1px dashed var(--border-main); border-radius: 8px; padding: 2rem; color: var(--text-muted); opacity: 0.8;")
+              div(style="font-size: 1.5rem; margin-bottom: 0.5rem;") 📄
+              div(style="font-weight: 600; font-size: 1.1rem; margin-bottom: 0.25rem; color: var(--text-main);") No Previous Version
+              div(style="font-size: 0.9rem; line-height: 1.5;") This is a brand new submission. There is no prior content to compare against.
+          else
+            if bullet && bullet.image_uri
+              .diff-media-box
+                +display-image(bullet.image_uri).bullet-thumbnail
+            else
+              div.diff-no-media No Media
+
+            .diff-section
+              span.diff-label Topic
+              div.diff-text= bullet.title ? bullet.title : '<Untitled>'
+
+            .diff-section
+              span.diff-label Active at
+              div.diff-text= bullet.active_at ? new Date(bullet.active_at * 1000).toLocaleString() : '<Not set>'
+
+            .diff-section
+              span.diff-label Expire at
+              div.diff-text= bullet.expire_at ? new Date(bullet.expire_at * 1000).toLocaleString() : '<Not set>'
+
+            .diff-section
+              span.diff-label Status
+              div(style="margin-top: 0.5rem;")
+                span.badge(class=bullet.is_active ? 'badge-success' : 'badge-gray')= bullet.is_active ? 'Active' : 'Archived'
+            
+            .diff-section
+              span.diff-label Description
+              div.diff-text= bullet.content ? bullet.content : '<No description>'
+
+
+        .diff-proposed.diff-panel
+          h4.diff-title(style="color: var(--primary);") Proposed Update
+          if patch.image_uri
+            .diff-media-box.diff-updated
+              span.badge.diff-patch MEDIA UPDATED
+              +display-image(patch.image_uri).proposed-media-thumbnail
+          else if (bullet && bullet.image_uri)
+            .diff-media-box.diff-dimmed
+              +display-image(bullet.image_uri).bullet-thumbnail
+          else
+            .diff-no-media No Media Change
+
+          - const hasTopicChange = (patch.title ?? null) !== null;
+          .diff-section
+            span.diff-label Topic
+              if hasTopicChange
+                span.diff-updated-text UPDATED
+            div.diff-text(style=hasTopicChange ? 'color: var(--primary); font-weight: 700;' : '')= hasTopicChange ? patch.title : '<Unchanged>'
+
+          .diff-section
+            span.diff-label Active at
+            div.diff-text= patch.active_at ? new Date(patch.active_at * 1000).toLocaleString() : '<Unchanged>'
+
+          .diff-section
+            span.diff-label Expire at
+            div.diff-text= patch.expire_at ? new Date(patch.expire_at * 1000).toLocaleString() : '<Unchanged>'
+
+          - const hasStatusChange = (patch.is_active ?? null) !== null;
+          .diff-section
+            span.diff-label Status
+              if hasStatusChange
+                span.diff-updated-text UPDATED
+
+            div(style="margin-top: 0.5rem;")
+              - const finalStatus = patch.is_active ?? bullet?.is_active ?? true;
+              span.badge(class=finalStatus ? 'badge-success' : 'badge-gray')= finalStatus ? 'Active' : 'Archived'
+
+          - const hasContentChange = (patch.content ?? null) !== null;
+          .diff-section
+            span.diff-label Description
+              if hasContentChange
+                span.diff-updated-text UPDATED
+            div.diff-text(style=hasContentChange ? 'color: var(--primary); font-weight: 500;' : '')= hasContentChange ? patch.content : '<Unchanged>'
+
